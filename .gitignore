@@ -361,3 +361,28 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# --- Unity 필수 무시 항목 ---
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Logs]/
+/[MemoryCaptures]/
+/[UserSettings]/
+
+# Unity가 생성하는 에셋 메타데이터 중 임시 파일
+*.ccu
+*.clintl
+*.aintl
+*.rsp
+*.pyc
+*.sln
+*.csproj
+*.dotSettings.user
+*.userprefs
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db

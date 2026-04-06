@@ -1,0 +1,29 @@
+using UnityEngine;
+using UnityEngine.Tilemaps;
+using UnityEngine.InputSystem;
+using System;
+
+public class PlayerInput : MonoBehaviour {
+    private PlayerControl control;
+
+    public event Action<Vector2> OnMoveInputTriggered;
+    public event Action OnSetMoveInputTriggered;
+
+    void Awake() {
+        control = new PlayerControl();
+
+        control.Player.Movement.performed += ctx => OnMoveInputTriggered?.Invoke(ctx.ReadValue<Vector2>());
+        control.Player.SetMovement.performed += ctx => OnSetMoveInputTriggered?.Invoke();
+    }
+
+    // Update is called once per frame
+    void Update() {
+    }
+
+    public void OnEnable() {
+        control.Player.Enable();
+    }
+    public void OnDisable() {
+        control.Player.Disable();
+    }
+}
