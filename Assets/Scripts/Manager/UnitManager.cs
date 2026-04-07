@@ -13,7 +13,7 @@ public class UnitManager : MonoBehaviour
 
     private void spawnUnit() {
         Vector3 playerSpawnPosition = Vector3.zero;
-        Vector3 enemySpawnPosition = new Vector3(3, 0.5f, 4);
+        Vector3 enemySpawnPosition = new Vector3(3, 0, 4);
 
         GameObject playerInstance = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
         TurnManager.Instance.playerController = playerInstance.GetComponent<PlayerController>();

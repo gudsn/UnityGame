@@ -26,7 +26,8 @@ public class PlayerController : MonoBehaviour
             ghostInstance = Instantiate(playerPrefab, transform.position, Quaternion.identity);
             ghostPosition = transform.position;
 
-            Renderer ghostRenderer = ghostInstance.GetComponent<Renderer>();
+            Renderer ghostRenderer = ghostInstance.GetComponentInChildren<Renderer>();
+
             if (ghostRenderer != null) {
                 Color newColor = ghostRenderer.material.color;
 
