@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 [System.Serializable]
 public class Status
 {
+    //Health
     [SerializeField] private float maxHealth;
     private float mcurrentHealth = 0;
     public float CurrentHealth {
