@@ -363,26 +363,23 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # --- Unity 필수 무시 항목 ---
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Logs]/
-/[MemoryCaptures]/
-/[UserSettings]/
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+/Logs/
+/MemoryCaptures/
+/UserSettings/
 
-# Unity가 생성하는 에셋 메타데이터 중 임시 파일
-*.ccu
-*.clintl
-*.aintl
-*.rsp
-*.pyc
-*.sln
+# 유니티가 생성하는 VS 프로젝트 파일 (언제든 다시 생성 가능)
 *.csproj
-*.dotSettings.user
-*.userprefs
+*.sln
+*.vsconfig
 
-# OS 생성 파일
+# OS에서 생성하는 임시 파일
 .DS_Store
-Thumbs.db
+[Tt]humbs.db
+
+# 유니티 Crash 리포트
+sysinfo.txt

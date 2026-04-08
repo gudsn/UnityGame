@@ -1,23 +1,36 @@
 using JetBrains.Annotations;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class GridSystem : MonoBehaviour {
 
+    // GridSystem Singleton Instance
     public static GridSystem Instance { get; private set; }
 
+    // Grid Prefab for Spawning 
     [SerializeField] private GameObject gridPrefab;
     [SerializeField] private TileSO tileSO;
 
     private TileData[,] tileData;
     private TileScript[,] tileScript;
 
+    // grid init data
     private Vector3 gridCenter = Vector3.zero;
     private int gridSize = 1;
 
     private HashSet<TileData> highlightedTileHash;
 
+    // Grid Instace number while it spawned
     private int instanceNumber = 0;
+
+    // Grid Neighbour direction Array
+    private static readonly Vector2Int[] Directions = {
+    new Vector2Int(0, 1),
+    new Vector2Int(0, -1),
+    new Vector2Int(-1, 0),
+    new Vector2Int(1, 0)
+    };
     void Awake() {
 
         if (Instance != null) {
@@ -74,6 +87,7 @@ public class GridSystem : MonoBehaviour {
     public void SpawnManhattanDistanceGrid(Vector3 worldPosition, int range) {
         HashSet<TileData> visitedHash = new HashSet<TileData>();
         Queue<TileData> checkQueue = new Queue<TileData>();
+        List<TileData> neighbourList = new List<TileData>();
 
         TileData startTile = WorldPositionToGridTile(worldPosition);
 
@@ -89,7 +103,18 @@ public class GridSystem : MonoBehaviour {
             for (int queueCount = 0; queueCount < currentQueueCount; queueCount++) {
                 TileData currentTile = checkQueue.Dequeue();
 
-                FindTileNeighbours(visitedHash, checkQueue, currentTile);
+                neighbourList = FindTileNeighbours(currentTile);
+
+                foreach (TileData n in neighbourList) {
+                    if (visitedHash.Contains(n)) {
+                        continue; // Skip already visited tiles
+                    }
+
+                    if (n.isWalkable) {
+                        checkQueue.Enqueue(n);
+                        visitedHash.Add(n);
+                    }
+                }
 
             }
         }
@@ -109,44 +134,130 @@ public class GridSystem : MonoBehaviour {
             highlightedTileHash.Clear();
         }
     }
-    public int GetManhattanDistanceGridSize(int range) {
-       return (2 * range * range) + (2 * range) + 1;
+    public int GetManhattanDistance(Vector3 start, Vector3 end) {
+        int distance = Mathf.Abs((int)start.x - (int)end.x);
+        distance += Mathf.Abs((int)start.y - (int)end.y);
+        return distance;
     }
 
-    public void FindTileNeighbours(HashSet<TileData> hash, Queue<TileData> queue, TileData currentTile) {
-        for (int gridX = -1; gridX <= 1; gridX++) {
+    public List<TileData> FindTileNeighbours(TileData currentTile) {
+        List<TileData> neighbourTile = new List<TileData>();
 
-            for (int gridY = -1; gridY <= 1; gridY++) {
+        foreach (Vector2Int dir in Directions) {
+            int gridX = currentTile.gridX + dir.x;
+            int gridY = currentTile.gridY + dir.y;
 
-                if (Mathf.Abs(gridX) + Mathf.Abs(gridY) > 1) {
-                    continue;
-                }
-
-                if (gridX == 0 && gridY == 0) {
-                    continue; // Skip the current tile
-                }
-
-                if (currentTile.gridX + gridX < 0 || currentTile.gridX + gridX >= tileSO.numberOfTilesToSpawnX || currentTile.gridY + gridY < 0 || currentTile.gridY + gridY >= tileSO.numberOfTilesToSpawnY) {
-                    continue; // Skip out of bounds tiles
-                }
-
-                TileData neighbourTile = tileData[currentTile.gridX + gridX, currentTile.gridY + gridY];
-
-                if (hash.Contains(neighbourTile)) {
-                        continue; // Skip already visited tiles
-                }
-
-                if (neighbourTile.isWalkable) { 
-                    queue.Enqueue(neighbourTile);
-                    hash.Add(neighbourTile);
-                }
-
+            if (gridX < 0 || gridX >= tileSO.numberOfTilesToSpawnX || gridY < 0 || gridY >= tileSO.numberOfTilesToSpawnY) {
+                continue; // Skip out of bounds tiles
             }
+
+            neighbourTile.Add(tileData[gridX, gridY]);
         }
+        return neighbourTile;
     }
     public bool checkHighlightedTile(TileData checkTile) {
         if (checkTile == null) return false;
 
         return highlightedTileHash.Contains(checkTile);
     }
+
+    // Node class for A* alogorithm
+    public class Node {
+        public TileData tile;
+        public Node parent;
+
+        public int gCost;
+        public int hCost;
+        public int fCost => gCost + hCost;
+        public Node(TileData tile, Node parent, int gCost, int hCost) {
+            this.tile = tile;
+            this.parent = parent;
+            this.gCost = gCost;
+            this.hCost = hCost;
+        }
+    }
+    // OpenList for unsearched tiles
+    List<Node> openList = new List<Node>();
+
+    // ClosedList for searched tiles
+    List<Node> closedList = new List<Node>();
+    public List<TileData> A_Algorithm(TileData start, TileData end){
+        openList.Add(new Node(start, null, 0, (GetManhattanDistance(start.worldPosition, end.worldPosition) * 10)));
+
+        Node currentNode = new Node(null, null, 0, 0);
+
+        List<TileData> neighbourTileList = new List<TileData>();
+
+        while (openList.Count > 0) {
+            currentNode = openList[0];
+
+            closedList.Add(currentNode);
+            openList.RemoveAt(0);
+
+            if (currentNode.tile == end) {
+                break;
+            }
+
+            neighbourTileList = FindTileNeighbours(currentNode.tile);
+
+            foreach (Node node in openList) {
+                if (!neighbourTileList.Contains(node.tile)) {
+                    continue;
+                }
+                if (node.gCost >= currentNode.gCost + 10) {
+                    continue;
+                }
+                node.parent = currentNode;
+                node.gCost = currentNode.gCost + 10;
+                neighbourTileList.Remove(node.tile);
+            }
+
+            foreach (Node node in closedList) {
+                if (!neighbourTileList.Contains(node.tile)) {
+                    continue;
+                }
+                neighbourTileList.Remove(node.tile);
+            }
+
+            foreach (TileData tile in neighbourTileList) {
+                if (!tile.isWalkable) {
+                    continue;
+                }
+                openList.Add(InsertNode(tile, end, currentNode));
+            }
+
+            openList.Sort((nodeA, nodeB) => {
+                int value = nodeA.fCost.CompareTo(nodeB.fCost);
+
+                if (value == 0) {
+                    value = nodeA.hCost.CompareTo(nodeB.hCost);
+                }
+
+                return value;
+            });
+        }
+
+        List<TileData> tileList = new List<TileData>();
+        if (currentNode != null && currentNode.tile == end) {
+            while (currentNode.tile != start) {
+                tileList.Add(currentNode.tile);
+                currentNode = currentNode.parent;
+            }
+        }
+
+        tileList.Reverse();
+
+        closedList.Clear();
+        openList.Clear();
+
+        return tileList;
+        
+    }
+    public Node InsertNode(TileData tile, TileData target, Node parent) {
+        int gCost = parent.gCost + 10;
+        int hCost = GetManhattanDistance(tile.worldPosition, target.worldPosition) * 10;
+
+        return new Node(tile, parent, gCost, hCost);
+    }
 }
+
