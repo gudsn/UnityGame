@@ -36,6 +36,7 @@ public class PriorityQueue<T> {
     public void Clear() {
         heap.Clear();
         heap.Add(new HeapData(NegativeInfinity, default(T)));
+        tailIndex = 0;
         data.Clear();
     }
 
