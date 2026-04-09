@@ -24,13 +24,6 @@ public class GridSystem : MonoBehaviour {
     // Grid Instace number while it spawned
     private int instanceNumber = 0;
 
-    // Grid Neighbour direction Array
-    private static readonly Vector2Int[] Directions = {
-    new Vector2Int(0, 1),
-    new Vector2Int(0, -1),
-    new Vector2Int(-1, 0),
-    new Vector2Int(1, 0)
-    };
     void Awake() {
 
         if (Instance != null) {
@@ -139,6 +132,14 @@ public class GridSystem : MonoBehaviour {
         distance += Mathf.Abs((int)start.y - (int)end.y);
         return distance;
     }
+
+    // Grid Neighbour direction Array
+    private static readonly Vector2Int[] Directions = {
+    new Vector2Int(0, 1),
+    new Vector2Int(0, -1),
+    new Vector2Int(-1, 0),
+    new Vector2Int(1, 0)
+    };
 
     public List<TileData> FindTileNeighbours(TileData currentTile) {
         List<TileData> neighbourTile = new List<TileData>();
