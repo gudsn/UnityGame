@@ -1,6 +1,8 @@
 using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 public class GridSystem : MonoBehaviour {
@@ -177,82 +179,77 @@ public class GridSystem : MonoBehaviour {
             this.hCost = hCost;
         }
     }
-    // OpenList for unsearched tiles
-    List<Node> openList = new List<Node>();
 
-    // ClosedList for searched tiles
-    List<Node> closedList = new List<Node>();
-    public List<TileData> A_Algorithm(TileData start, TileData end){
-        openList.Add(new Node(start, null, 0, (GetManhattanDistance(start.worldPosition, end.worldPosition) * 10)));
+    // Priority Queue for openList(sorting)
+    PriorityQueue<Node> openQueue = new PriorityQueue<Node>('l');
 
-        Node currentNode = new Node(null, null, 0, 0);
+    // Dictionary for openList(searching)
+    Dictionary<TileData, Node> openSet = new Dictionary<TileData, Node>();
 
-        List<TileData> neighbourTileList = new List<TileData>();
+    // HashSet for closedList
+    HashSet<TileData> closedHash = new HashSet<TileData>();
 
-        while (openList.Count > 0) {
-            currentNode = openList[0];
+    public List<TileData> A_Algorithm(TileData start, TileData end) {
+        openQueue.Clear();
+        openSet.Clear();
+        closedHash.Clear();
 
-            closedList.Add(currentNode);
-            openList.RemoveAt(0);
+        Node startNode = new Node(start, null, 0, 0);
+        openSet[start] = startNode;
+        openQueue.Enqueue(startNode.fCost, startNode);
+
+        Node currentNode = null;
+
+        List<TileData> neighbourList = new List<TileData>();
+        
+        while (openSet.Count > 0) {
+            currentNode = openQueue.Dequeue();
+
+            openSet.Remove(currentNode.tile);
+            closedHash.Add(currentNode.tile);
 
             if (currentNode.tile == end) {
                 break;
             }
+            neighbourList = FindTileNeighbours(currentNode.tile);
 
-            neighbourTileList = FindTileNeighbours(currentNode.tile);
-
-            foreach (Node node in openList) {
-                if (!neighbourTileList.Contains(node.tile)) {
-                    continue;
-                }
-                if (node.gCost >= currentNode.gCost + 10) {
-                    continue;
-                }
-                node.parent = currentNode;
-                node.gCost = currentNode.gCost + 10;
-                neighbourTileList.Remove(node.tile);
-            }
-
-            foreach (Node node in closedList) {
-                if (!neighbourTileList.Contains(node.tile)) {
-                    continue;
-                }
-                neighbourTileList.Remove(node.tile);
-            }
-
-            foreach (TileData tile in neighbourTileList) {
+            foreach (TileData tile in neighbourList) {
                 if (!tile.isWalkable) {
                     continue;
                 }
-                openList.Add(InsertNode(tile, end, currentNode));
-            }
+                if (closedHash.Contains(tile)) {
+                    continue;
+                }
+                int newGCost = currentNode.gCost + 10;
+                // Check if tile is already in openSet
+                if (openSet.TryGetValue(tile, out Node checkNode)) {
+                    // If new gCost smaller than openSet gCost if so update data
+                    if (checkNode.gCost > newGCost) {
+                        checkNode.gCost = newGCost;
+                        checkNode.parent = currentNode;
 
-            openList.Sort((nodeA, nodeB) => {
-                int value = nodeA.fCost.CompareTo(nodeB.fCost);
-
-                if (value == 0) {
-                    value = nodeA.hCost.CompareTo(nodeB.hCost);
+                        openQueue.Update(checkNode, checkNode.fCost, checkNode);
+                    }
+                    continue;
                 }
 
-                return value;
-            });
-        }
-
-        List<TileData> tileList = new List<TileData>();
-        if (currentNode != null && currentNode.tile == end) {
-            while (currentNode.tile != start) {
-                tileList.Add(currentNode.tile);
-                currentNode = currentNode.parent;
+                Node newNode = InsertNode(tile, end, currentNode);
+                openSet[tile] = newNode;
+                openQueue.Enqueue(newNode.fCost, newNode);
             }
         }
 
-        tileList.Reverse();
+        // List for route tiles from start tile to end tile
+        List<TileData> visitedTile = new List<TileData>();
+        if (currentNode.tile == end && currentNode != null) {
+            while (currentNode != null && currentNode.tile != start) {
+                visitedTile.Add(currentNode.tile);
+                currentNode = currentNode.parent;
+            }
+            visitedTile.Reverse();
+        }
 
-        closedList.Clear();
-        openList.Clear();
-
-        return tileList;
-        
+        return visitedTile;
     }
     public Node InsertNode(TileData tile, TileData target, Node parent) {
         int gCost = parent.gCost + 10;

@@ -23,11 +23,20 @@ public class PriorityQueue<T> {
     // Last index
     private int tailIndex = 0;
 
+    // For first index in heap
+    public const int NegativeInfinity = int.MinValue / 2;
+
     public PriorityQueue(char a) {
-        heap.Add(new HeapData(-100, default(T)));
+        heap.Add(new HeapData(NegativeInfinity, default(T)));
 
         if (a == 'l') this.compare = -1;
         else if (a == 'g') this.compare = 1;
+    }
+
+    public void Clear() {
+        heap.Clear();
+        heap.Add(new HeapData(NegativeInfinity, default(T)));
+        data.Clear();
     }
 
     public void Enqueue(int priority, T value) {
