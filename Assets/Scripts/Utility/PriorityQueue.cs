@@ -11,6 +11,10 @@ public class PriorityQueue<T> {
             this.value = value;
         }
     }
+    public enum HeapType { 
+        max,
+        min
+    }
     // heap structure for priority queue
     public List<HeapData> heap = new List<HeapData>();
 
@@ -23,19 +27,16 @@ public class PriorityQueue<T> {
     // Last index
     private int tailIndex = 0;
 
-    // For first index in heap
-    public const int NegativeInfinity = int.MinValue / 2;
+    public PriorityQueue(HeapType type) {
+        heap.Add(new HeapData(0, default(T)));
 
-    public PriorityQueue(char a) {
-        heap.Add(new HeapData(NegativeInfinity, default(T)));
-
-        if (a == 'l') this.compare = -1;
-        else if (a == 'g') this.compare = 1;
+        if (type == HeapType.min) this.compare = -1;
+        else if (type == HeapType.max) this.compare = 1;
     }
 
     public void Clear() {
         heap.Clear();
-        heap.Add(new HeapData(NegativeInfinity, default(T)));
+        heap.Add(new HeapData(0, default(T)));
         tailIndex = 0;
         data.Clear();
     }
@@ -45,15 +46,7 @@ public class PriorityQueue<T> {
         tailIndex++;
         data.Add(heap[tailIndex].value, tailIndex);
 
-        int currentIndex = tailIndex;
-        while (currentIndex > 1) {
-            int parentIndex = currentIndex / 2;
-            if (heap[currentIndex].priority.CompareTo(heap[parentIndex].priority) == compare) {
-                Swap(currentIndex, parentIndex);
-                currentIndex = parentIndex;
-            }
-            else break;
-        }
+        ShiftUp(tailIndex);
     }
 
     public T Dequeue() {
@@ -75,27 +68,28 @@ public class PriorityQueue<T> {
     }
 
     public void Remove(T value) {
-        if (!data.ContainsKey(value)) {
+        if (!data.TryGetValue(value, out int index)) {
             return;
         }
-        if (data[value] == tailIndex) {
-            data.Remove(heap[tailIndex].value);
+
+        if (index == tailIndex) {
+            data.Remove(value);
             heap.RemoveAt(tailIndex);
             tailIndex--;
             return;
         }
 
-        Swap(data[value], tailIndex);
+        Swap(index, tailIndex);
 
-        data.Remove(heap[tailIndex].value);
+        data.Remove(value);
         heap.RemoveAt(tailIndex);
         tailIndex--;
 
         // If removed node is an ancesstor of tail node then shift down
-        ShiftDown(data[value]);
+        ShiftDown(index);
 
         // If removed node isn't an ancesstor of tail node tail node can be greater(less) than child node
-        ShiftUp(data[value]);
+        ShiftUp(index);
 
     }
 
@@ -149,8 +143,6 @@ public class PriorityQueue<T> {
             if (heap[compareIndex].priority.CompareTo(heap[currentIndex].priority) == compare) {
                 Swap(currentIndex, compareIndex);
                 currentIndex = compareIndex;
-                leftChildIndex = currentIndex * 2;
-                rightChildIndex = currentIndex * 2 + 1;
             }
             else {
                 break;

@@ -181,7 +181,7 @@ public class GridSystem : MonoBehaviour {
     }
 
     // Priority Queue for openList(sorting)
-    PriorityQueue<Node> openQueue = new PriorityQueue<Node>('l');
+    PriorityQueue<Node> openQueue = new PriorityQueue<Node>(PriorityQueue<Node>.HeapType.min);
 
     // Dictionary for openList(searching)
     Dictionary<TileData, Node> openSet = new Dictionary<TileData, Node>();
