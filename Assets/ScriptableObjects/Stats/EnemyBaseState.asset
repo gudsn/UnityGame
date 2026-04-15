@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 962ad001a79b0d14f9fa04b7f97a51a0, type: 3}
   m_Name: EnemyBaseState
   m_EditorClassIdentifier: Assembly-CSharp::StateSO
-  unitName: 
-  maxHealthPoint: 0
-  maxMagicPoint: 0
-  baseAttackPoint: 0
+  unitName: Enemy
+  maxHealthPoint: 20
+  maxMagicPoint: 10
+  baseAttackPoint: 20
   baseDefensePoint: 0
-  moveRange: 0
+  moveRange: 2
