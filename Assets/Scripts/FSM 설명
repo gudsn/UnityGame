@@ -1,0 +1,29 @@
+FSM 구현[수정 예정]
+
+TurnManager: FSM의 유닛의 순서, player와 enemy 전환, turn의 시작과 끝에 일들을 담당 
+ㄴ 모든 유닛의 Queue
+ㄴ 속도나 어떤 함수로 유닛의 순서를 정하고
+ㄴ 모든 유닛을 찰례대로 빼내며 Player Turn, Enemy Turn으로 분류함
+ㄴ Player의 턴이 끝나면 Enemy로 턴을 바꿔주는 함수 제공
+
+Player / Enemy Turn: 실제 Player와 Enemy의 FSM 함수(transition)
+ㄴ 모든 유닛은 Player측 유닛인지, Enemy 측 유닛인지 구분됨
+ㄴ 각 유닛에 맞는 단 하나의 공유되는 FSM이 존재함
+ㄴ Turn Manager에서 받은 유닛을 FSM에 밀어 넣음
+ㄴ FSM에 속하는 모든 상태의 전이를 구현
+ㄴ 끝날을떄 Enemy로 턴을 넘김
+
+Turn: 다양한 상태
+ㄴ 실질적인 행동을 위해 input과 controller를 이어줌(구독 할당)
+
+ITurnState: 상태의 기본 형태
+ㄴ Enter(), Exevute(), Exit()
+
+FSM 동작
+
+1. 어디선가 생성된(Unit Manager) 유닛의 정보를 Turn Manager에게 보냄
+2. 모든 유닛의 정보를 Queue에 저장
+3. 유닛의 순서를 정하고 Player Turn, Enemy Turn에게 넘김
+4. 각 FSM의 따라 행동
+5. 모든 유닛이 행동을 끝내면 다시 시작
+
