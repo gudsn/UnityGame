@@ -3,7 +3,7 @@ FSM 구현[수정 예정]
 TurnManager: FSM의 유닛의 순서, player와 enemy 전환, turn의 시작과 끝에 일들을 담당 
 ㄴ 모든 유닛의 Queue
 ㄴ 속도나 어떤 함수로 유닛의 순서를 정하고
-ㄴ 모든 유닛을 찰례대로 빼내며 Player Turn, Enemy Turn으로 분류함
+ㄴ 모든 유닛을 차례대로 빼내며 Player Turn, Enemy Turn으로 분류함
 ㄴ Player의 턴이 끝나면 Enemy로 턴을 바꿔주는 함수 제공
 
 Player / Enemy Turn: 실제 Player와 Enemy의 FSM 함수(transition)
