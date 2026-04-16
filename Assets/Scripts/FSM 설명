@@ -19,7 +19,7 @@ Turn: 다양한 상태
 ITurnState: 상태의 기본 형태
 ㄴ Enter(), Exevute(), Exit()
 
-FSM 동작
+전체 흐름
 
 1. 어디선가 생성된(Unit Manager) 유닛의 정보를 Turn Manager에게 보냄
 2. 모든 유닛의 정보를 Queue에 저장
@@ -27,3 +27,23 @@ FSM 동작
 4. 각 FSM의 따라 행동
 5. 모든 유닛이 행동을 끝내면 다시 시작
 
+PlayerFSM 동작
+
+1. 유닛을 TurnManager로 부터 받음
+2. 시작 State의 Enter를 작동
+3. State 내부의 행동을 실행
+4. 실행 종료 후 State 내부에서 ChangeState()로 다음 State로 이동
+5. 마지막 State로 이동후, TurnManager의 다음 유닛을 받으러 감
+
+EnemyFSM 동작
+
+ㄴ 각 유닛은 Brain이라는 state 판단 머신이 붙어 있음
+1. 유닛을 TrunManager로 부터 받음
+2. 유닛의 Brain에게 첫 State를 물어보고 해당 State로 이동 해줌
+3. State의 행동을 실행
+4. 행동의 실행 상태를 판단해서 Brain에게 알림
+5. 다음 행동을 진행
+6. 마지막 State로 이동후, TurnManager의 다음 유닛을 받으러 감
+
+Player의 움직임은 정형화 되어 있다. 어떤 행동을 한 후 다음 올 행동이 정해 져있기 때문에 state가 다른 State로의 전이를 결정할 수 있다.
+Enemy의 움직임은 미리 생각을 해야 한다. 때문에 State가 다음 State로 전이를 결정하면 예기치 못한 상황이 생길 수 있음으로, 미리 생각을 하고 그 상태의 나열로 상태를 전이한다.
