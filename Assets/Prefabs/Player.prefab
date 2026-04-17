@@ -9,8 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7895020499584050296}
-  - component: {fileID: 9049324483166080431}
-  - component: {fileID: -6381538009002566597}
+  - component: {fileID: 127795058242183544}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -34,7 +33,7 @@ Transform:
   - {fileID: 5662705841948514891}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &9049324483166080431
+--- !u!114 &127795058242183544
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -43,23 +42,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2852092759408665874}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24bb1959d010e2d44bbfb648a07995a9, type: 3}
+  m_Script: {fileID: 11500000, guid: 1ca1c487c8617594db4582497ec69a11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  playerPrefab: {fileID: 2852092759408665874}
-  playerVisual: {fileID: 54472293076779054, guid: 73a62394a1c431a4db5a6f490c985f88, type: 3}
---- !u!114 &-6381538009002566597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2852092759408665874}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b71cdd5aaa25a94fb4665c768dd7904, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatusManager
+  baseState: {fileID: 11400000, guid: e50534f4b5e749642bea0ec0327f3445, type: 2}
+  ghostPrefab: {fileID: 2852092759408665874}
 --- !u!1001 &1523653596067945046
 PrefabInstance:
   m_ObjectHideFlags: 0

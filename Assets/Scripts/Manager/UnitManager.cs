@@ -12,17 +12,22 @@ public class UnitManager : MonoBehaviour
     }
 
     private void spawnUnit() {
+        GridSystem.Instance.spawnSquareGrid();
+
         Vector3 playerSpawnPosition = Vector3.zero;
         Vector3 enemySpawnPosition = new Vector3(3, 0, 4);
 
         GameObject playerInstance = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
-        TurnManager.Instance.playerController = playerInstance.GetComponent<PlayerController>();
-        TurnManager.Instance.playerInput = playerInstance.GetComponent<PlayerInput>();
+        if (playerInstance.TryGetComponent(out Unit playerUnit)) {
+            FSMManager.Instance.EnqueueNewUnit(playerUnit);
+        }
 
         GameObject enemyInstance = Instantiate(enemyPrefab, enemySpawnPosition, Quaternion.identity);
-        TurnManager.Instance.enemyMove = enemyInstance.GetComponent<EnemyMove>();
+        if (enemyInstance.TryGetComponent(out Unit enemyUnit)) {
+            FSMManager.Instance.EnqueueNewUnit(enemyUnit);
+        }
 
-        TurnManager.Instance.InitTurnSystem();
+        FSMManager.Instance.StartState();
     }
     
 }

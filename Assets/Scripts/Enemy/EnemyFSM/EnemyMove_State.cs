@@ -1,11 +1,14 @@
 using System; 
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
+
 using Random = UnityEngine.Random;
 
-public class EnemyMove : MonoBehaviour {
+public class EnemyMove_State : ITurnState{
+    private Unit activeUnit;
+    private EnemyFSM machine;
+
     Vector3 randomPosition;
     TileData targetTile;
     TileData startTile;
@@ -14,18 +17,36 @@ public class EnemyMove : MonoBehaviour {
 
     float moveSpeed = 1f;
 
+    public EnemyMove_State(EnemyFSM machine) {       
+        this.machine = machine;
+        this.activeUnit = machine.activeUnit;
+    }
+    private int moveRange = 2;
+
+    public void Enter() {
+            Debug.Log("Enemy Turn");
+            machine.StartCoroutine(Movement(moveRange, () => {
+            machine.UnitEnd();
+        }));
+    }
+    public void Execute() { }
+    public void Exit() {
+
+        Debug.Log("적 턴 종료.");
+    }
+
     public IEnumerator Movement(int moveRange, Action onComplete) {
         int attemptCount = 0;
         int maxAttempt = 50;
-        startTile = GridSystem.Instance.WorldPositionToGridTile(transform.position);
+        startTile = GridSystem.Instance.WorldPositionToGridTile(activeUnit.transform.position);
 
         do {
             int randomX = Random.Range(-moveRange, moveRange + 1);
             int randomY = Random.Range(-moveRange + Mathf.Abs(randomX), moveRange - Mathf.Abs(randomX) + 1);
-            randomPosition = transform.position + new Vector3(randomX, 0, randomY);
+            randomPosition = activeUnit.transform.position + new Vector3(randomX, 0, randomY);
 
             targetTile = GridSystem.Instance.WorldPositionToGridTile(randomPosition);
-                        
+
             attemptCount++;
             if (attemptCount == maxAttempt) {
                 onComplete?.Invoke();
@@ -45,13 +66,13 @@ public class EnemyMove : MonoBehaviour {
             foreach (TileData tile in routeTiles) {
                 Vector3 targetPosition = tile.worldPosition;
                 targetPosition.y = 0f;
-                while (Vector3.Distance(transform.position, targetPosition) > 0.01f) {
+                while (Vector3.Distance(activeUnit.transform.position, targetPosition) > 0.01f) {
 
-                    transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+                    activeUnit.transform.position = Vector3.MoveTowards(activeUnit.transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
                     yield return null;
                 }
-                transform.position = targetPosition;
+                activeUnit.transform.position = targetPosition;
             }
         }
         onComplete?.Invoke();

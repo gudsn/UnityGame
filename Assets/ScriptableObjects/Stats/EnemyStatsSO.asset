@@ -9,12 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 962ad001a79b0d14f9fa04b7f97a51a0, type: 3}
-  m_Name: EnemyBaseState
-  m_EditorClassIdentifier: Assembly-CSharp::StateSO
+  m_Script: {fileID: 11500000, guid: bccdeb0faa24e104bb89f20b071730e4, type: 3}
+  m_Name: EnemyStatsSO
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
   unitName: Enemy
-  maxHealthPoint: 20
-  maxMagicPoint: 10
-  baseAttackPoint: 20
+  defaultFaction: 1
+  maxHealthPoint: 40
+  baseAttackPoint: 10
   baseDefensePoint: 0
   moveRange: 2
+  unitSpeed: 10

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1058536742830985648}
-  - component: {fileID: -4338958977071493599}
+  - component: {fileID: -556590968273616662}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 5057339127282020015}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-4338958977071493599
+--- !u!114 &-556590968273616662
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,9 +42,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1111480681435143323}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 461db6883264cd242af72d41673ca50c, type: 3}
+  m_Script: {fileID: 11500000, guid: 1ca1c487c8617594db4582497ec69a11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyMove
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatusManager
+  baseState: {fileID: 11400000, guid: fa1b2205acda1804c8b7cbafe07d1840, type: 2}
+  ghostPrefab: {fileID: 6503254374588239099, guid: 07f46471bc768a949afd4fe16fc2d829, type: 3}
 --- !u!1001 &8713656604961343384
 PrefabInstance:
   m_ObjectHideFlags: 0

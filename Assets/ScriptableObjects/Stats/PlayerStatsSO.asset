@@ -9,12 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 962ad001a79b0d14f9fa04b7f97a51a0, type: 3}
-  m_Name: PlayerBaseState
-  m_EditorClassIdentifier: Assembly-CSharp::StateSO
+  m_Script: {fileID: 11500000, guid: 567deb54248ac8347b6bcb51f97d79e3, type: 3}
+  m_Name: PlayerStatsSO
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsSO
   unitName: Player
+  defaultFaction: 0
   maxHealthPoint: 100
-  maxMagicPoint: 20
-  baseAttackPoint: 10
+  baseAttackPoint: 20
   baseDefensePoint: 5
   moveRange: 2
+  unitSpeed: 11
+  maxMagicPoint: 100

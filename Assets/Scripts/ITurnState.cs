@@ -1,6 +1,6 @@
 public interface ITurnState
 {
-    void Enter(TurnManager manager);
+    void Enter();
     void Execute();
     void Exit();
 

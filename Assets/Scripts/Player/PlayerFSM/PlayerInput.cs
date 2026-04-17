@@ -9,7 +9,17 @@ public class PlayerInput : MonoBehaviour {
     public event Action<Vector2> OnMoveInputTriggered;
     public event Action OnSetMoveInputTriggered;
 
+    public static PlayerInput Instance { get; private set;}
+
     void Awake() {
+
+        if (Instance!= null) {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         control = new PlayerControl();
 
         control.Player.Movement.performed += ctx => OnMoveInputTriggered?.Invoke(ctx.ReadValue<Vector2>());

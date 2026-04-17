@@ -13,32 +13,56 @@ public class UnitStats
         return CurrentHealth;
     }
 
-    // Magic
-    public float maxMagicPoint { get; private set; }
-    public float CurrentMagicPoint { get; private set; }
-    public float ModifyMagicPoint(float amount) {
-        CurrentMagicPoint += amount;
-        CurrentMagicPoint = Mathf.Clamp(CurrentMagicPoint, 0, maxMagicPoint);
-        return CurrentMagicPoint;
+    public virtual float GetHealth() {
+        return CurrentHealth;
     }
 
     // Attack
     private float baseAttack;
     public float CurrentAttack { get; private set; }
 
+    public virtual float GetAttackPower() {
+        return CurrentAttack; 
+    }
+
     // Defense
     private float baseDefense;
     public float CurrentDefense { get; private set; }
 
-    public UnitStats(StateSO baseState) {
+    public virtual float GetDefensePower() {
+        return CurrentDefense;
+    }
+
+    // Speed
+    private int baseSpeed;
+    public int CurrentSpeed { get; private set;}
+    public virtual int GetUnitSpeed() {
+        return CurrentSpeed;
+    }
+
+    // Faction
+    public Faction CurrentFaction { get; private set;}
+
+    public virtual Faction GetUnitFaction() {
+        return CurrentFaction;
+    }
+
+    public virtual void OnTurnStarted() { 
+    
+    }
+    public UnitStats(UnitStatsSO baseState) {
         this.maxHealth = baseState.maxHealthPoint;
-        this.maxMagicPoint = baseState.maxMagicPoint;
         this.baseAttack = baseState.baseAttackPoint;
         this.baseDefense = baseState.baseDefensePoint;
 
+        this.CurrentFaction = baseState.defaultFaction;
+
+        this.baseSpeed = baseState.unitSpeed;
+
         this.CurrentHealth = this.maxHealth;
-        this.CurrentMagicPoint = this.maxMagicPoint;
         this.CurrentAttack = this.baseAttack;
         this.CurrentDefense = this.baseDefense;
+
+        this.CurrentSpeed = this.baseSpeed;
     }
 }
