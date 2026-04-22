@@ -40,6 +40,12 @@ public class UnitStats
         return CurrentSpeed;
     }
 
+    // MoveRange
+    private int moveRange;
+    public int CurrentMoveRange { get; private set; }
+    public virtual int GetMoveRnage() {
+        return CurrentMoveRange;
+    }
     // Faction
     public Faction CurrentFaction { get; private set;}
 
@@ -59,10 +65,14 @@ public class UnitStats
 
         this.baseSpeed = baseState.unitSpeed;
 
+        this.moveRange = baseState.moveRange;
+
         this.CurrentHealth = this.maxHealth;
         this.CurrentAttack = this.baseAttack;
         this.CurrentDefense = this.baseDefense;
 
         this.CurrentSpeed = this.baseSpeed;
+
+        this.CurrentMoveRange = this.moveRange;
     }
 }

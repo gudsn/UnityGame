@@ -21,11 +21,13 @@ public class EnemyMove_State : ITurnState{
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
     }
-    private int moveRange = 2;
+    private int moveRange; 
 
     public void Enter() {
-            Debug.Log("Enemy Turn");
-            machine.StartCoroutine(Movement(moveRange, () => {
+        moveRange = activeUnit.GetMoveRange();
+
+        Debug.Log("Enemy Turn");
+        machine.StartCoroutine(Movement(moveRange, () => {
             machine.UnitEnd();
         }));
     }

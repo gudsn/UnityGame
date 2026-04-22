@@ -46,6 +46,10 @@ public class Unit : MonoBehaviour {
     public float GetHealth() {
         return stats.GetHealth();
     }
+
+    public int GetMoveRange() {
+        return stats.GetMoveRnage();
+    }
     public void Die() {
         Debug.Log("Player can't handle the damage.");
     }

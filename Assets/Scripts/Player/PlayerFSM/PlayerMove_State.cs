@@ -7,17 +7,21 @@ public class PlayerMove_State : ITurnState {
     private GameObject ghostInstance;
     private Vector3 ghostPosition;
 
+    private int moveRange;
+
     public PlayerMove_State(PlayerFSM machine) {
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
     }
     public void Enter(){
+        moveRange = activeUnit.GetMoveRange();
+
         Debug.Log("Player Turn");
         PlayerInput.Instance.OnMoveInputTriggered += HandleIntendedMove;
         PlayerInput.Instance.OnSetMoveInputTriggered += HandleConfirmMove;
 
         SpwnGhost();
-        GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, 2);
+        GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, moveRange);
     }
 
     public void Execute() {
