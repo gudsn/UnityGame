@@ -1,20 +1,25 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-public class UnitStats
-{
+public class UnitStats : IHealth{
 
     //Health
     public float maxHealth { get; private set; }
     public float CurrentHealth {get; private set;}
-    
+
+    public event Action<float> OnHealthModified;
     public float ModifyHealth(float amount) {
         CurrentHealth += amount;
         CurrentHealth = Mathf.Clamp(CurrentHealth, 0, maxHealth);
+        OnHealthModified?.Invoke(CurrentHealth);
         return CurrentHealth;
     }
 
     public virtual float GetHealth() {
         return CurrentHealth;
+    }
+    public virtual float GetMaxHealth() {
+        return maxHealth;
     }
 
     // Attack

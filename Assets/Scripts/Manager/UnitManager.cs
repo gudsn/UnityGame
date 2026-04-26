@@ -20,11 +20,13 @@ public class UnitManager : MonoBehaviour
         GameObject playerInstance = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
         if (playerInstance.TryGetComponent(out Unit playerUnit)) {
             FSMManager.Instance.EnqueueNewUnit(playerUnit);
+            UIManager.Instance.RegisterUnitUI(playerUnit);
         }
 
         GameObject enemyInstance = Instantiate(enemyPrefab, enemySpawnPosition, Quaternion.identity);
         if (enemyInstance.TryGetComponent(out Unit enemyUnit)) {
             FSMManager.Instance.EnqueueNewUnit(enemyUnit);
+            UIManager.Instance.RegisterUnitUI(enemyUnit);
         }
 
         FSMManager.Instance.StartState();
