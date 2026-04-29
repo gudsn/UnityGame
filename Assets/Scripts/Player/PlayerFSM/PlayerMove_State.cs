@@ -52,15 +52,23 @@ public class PlayerMove_State : ITurnState {
             return;
         }
 
+        ghostInstance.transform.LookAt(intendedMovement);
         ghostPosition = intendedMovement;
         ghostInstance.transform.position = ghostPosition;
     }
     public void HandleConfirmMove() {
         activeUnit.transform.position = ghostInstance.transform.position;
+        activeUnit.transform.forward = ghostInstance.transform.forward;
+
+        TileData currentTile = GridSystem.Instance.WorldPositionToGridTile(activeUnit.transform.position);
+
+        Vector2Int newPosition = new Vector2Int(currentTile.gridX, currentTile.gridY);
+
+        UnitManager.Instance.MoveUnit(newPosition, activeUnit);
 
         //Next action after movement
-        Debug.Log("Player Over");
-        machine.UnitEnd();
+        Debug.Log("Player Turn Over");
+        machine.ChangeState(new PlayerAttack_State(machine));
     }
 
     private void SpwnGhost() {

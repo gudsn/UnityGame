@@ -98,7 +98,7 @@ public class GridSystem : MonoBehaviour {
             for (int queueCount = 0; queueCount < currentQueueCount; queueCount++) {
                 TileData currentTile = checkQueue.Dequeue();
 
-                neighbourList = FindTileNeighbours(currentTile);
+                neighbourList = FindTileNeighbours(currentTile, 1);
 
                 foreach (TileData n in neighbourList) {
                     if (visitedHash.Contains(n)) {
@@ -129,10 +129,31 @@ public class GridSystem : MonoBehaviour {
             highlightedTileHash.Clear();
         }
     }
+
+    public void SpawnAttackRange(Vector3 currentPosition, int attackRange) {
+        TileData currentTile = WorldPositionToGridTile(currentPosition);
+
+        List<TileData> attakRangeTile = FindTileNeighbours(currentTile, attackRange);
+
+        foreach (TileData tile in attakRangeTile) {
+            TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
+            currentTileScript.SetAttackRange();
+            highlightedTileHash.Add(tile);
+        }
+    }
     public int GetManhattanDistance(Vector3 start, Vector3 end) {
         int distance = Mathf.Abs((int)start.x - (int)end.x);
         distance += Mathf.Abs((int)start.y - (int)end.y);
         return distance;
+    }
+    public void DeleteAttackRange() {
+        if (highlightedTileHash.Count > 0) {
+            foreach (TileData tile in highlightedTileHash) {
+                TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
+                currentTileScript.SetAttackRange();
+            }
+            highlightedTileHash.Clear();
+        }
     }
 
     // Grid Neighbour direction Array
@@ -143,18 +164,26 @@ public class GridSystem : MonoBehaviour {
     new Vector2Int(1, 0)
     };
 
-    public List<TileData> FindTileNeighbours(TileData currentTile) {
+    public List<TileData> FindTileNeighbours(TileData currentTile, int range) {
         List<TileData> neighbourTile = new List<TileData>();
-
+        
         foreach (Vector2Int dir in Directions) {
-            int gridX = currentTile.gridX + dir.x;
-            int gridY = currentTile.gridY + dir.y;
 
-            if (gridX < 0 || gridX >= tileSO.numberOfTilesToSpawnX || gridY < 0 || gridY >= tileSO.numberOfTilesToSpawnY) {
-                continue; // Skip out of bounds tiles
+            for (int currentRange = 1; currentRange <= range; currentRange++) {
+                Vector2Int currentDir = dir * currentRange;
+
+                int gridX = currentTile.gridX + currentDir.x;
+                int gridY = currentTile.gridY + currentDir.y;
+
+                if (gridX < 0 || gridX >= tileSO.numberOfTilesToSpawnX || gridY < 0 || gridY >= tileSO.numberOfTilesToSpawnY) {
+                    continue; // Skip out of bounds tiles
+                }
+                if (!tileData[gridX, gridY].isWalkable) {
+                    break;
+                }
+
+                neighbourTile.Add(tileData[gridX, gridY]);
             }
-
-            neighbourTile.Add(tileData[gridX, gridY]);
         }
         return neighbourTile;
     }
@@ -211,7 +240,7 @@ public class GridSystem : MonoBehaviour {
             if (currentNode.tile == end) {
                 break;
             }
-            neighbourList = FindTileNeighbours(currentNode.tile);
+            neighbourList = FindTileNeighbours(currentNode.tile, 1);
 
             foreach (TileData tile in neighbourList) {
                 if (!tile.isWalkable) {
@@ -257,5 +286,6 @@ public class GridSystem : MonoBehaviour {
 
         return new Node(tile, parent, gCost, hCost);
     }
+
 }
 

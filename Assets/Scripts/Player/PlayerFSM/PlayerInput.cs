@@ -8,6 +8,7 @@ public class PlayerInput : MonoBehaviour {
 
     public event Action<Vector2> OnMoveInputTriggered;
     public event Action OnSetMoveInputTriggered;
+    public event Action<Vector2> OnMouseClicked;
 
     public static PlayerInput Instance { get; private set;}
 
@@ -24,6 +25,10 @@ public class PlayerInput : MonoBehaviour {
 
         control.Player.Movement.performed += ctx => OnMoveInputTriggered?.Invoke(ctx.ReadValue<Vector2>());
         control.Player.SetMovement.performed += ctx => OnSetMoveInputTriggered?.Invoke();
+        control.Player.Click.performed += ctx => {
+            Vector2 mousePose = Mouse.current.position.ReadValue();
+            OnMouseClicked?.Invoke(mousePose);
+        };
     }
 
     // Update is called once per frame

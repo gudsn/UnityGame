@@ -16,7 +16,7 @@ public class FSMManager : MonoBehaviour
     private int currentTime = 0;
 
     private const int actionValue = 1000;
-    private void Awake() {
+    void Start(){
         if (Instance != null) {
             Destroy(gameObject);
             return;
@@ -24,9 +24,8 @@ public class FSMManager : MonoBehaviour
         Instance = this;
 
         unitQueue = new PriorityQueue<Unit>(PriorityQueue<Unit>.HeapType.min);
-    }
-    void Start(){
-        
+
+        UnitManager.Instance.OnSpawnUnit += EnqueueNewUnit;
     }
 
     // Update is called once per frame

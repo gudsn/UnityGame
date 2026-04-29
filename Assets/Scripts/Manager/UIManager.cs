@@ -13,8 +13,7 @@ public class UIManager : MonoBehaviour {
 
     public static UIManager Instance;
 
-    private void Awake() {
-
+    private void Start() {
         if (Instance != null) {
             Destroy(gameObject);
             return;
@@ -23,6 +22,8 @@ public class UIManager : MonoBehaviour {
 
         mainCamera = Camera.main;
         registeredUnit = new Dictionary<Unit, HealthBarController>();
+
+        UnitManager.Instance.OnSpawnUnit += RegisterUnitUI;
     }
     public void RegisterUnitUI(Unit unit) {
         if (unit.stats is IHealth health) {
@@ -30,6 +31,8 @@ public class UIManager : MonoBehaviour {
 
             HealthBarController currentHealthBarCtrl = new HealthBarController(hpBarTempelete, canvas, health);
             health.OnHealthModified += currentHealthBarCtrl.UpdateUI;
+
+            unit.OnUnitDie += UnregisterUnitUI;
 
             registeredUnit.Add(unit, currentHealthBarCtrl);
         }    
@@ -41,6 +44,8 @@ public class UIManager : MonoBehaviour {
             if (unit.stats is IHealth health) {
                 health.OnHealthModified -= currentHealthBarCtrl.UpdateUI;
             }
+            unit.OnUnitDie -= UnregisterUnitUI;
+            
             currentHealthBarCtrl.Cleanup();
         }
     }

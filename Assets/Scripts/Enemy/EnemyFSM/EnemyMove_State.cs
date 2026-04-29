@@ -34,7 +34,7 @@ public class EnemyMove_State : ITurnState{
     public void Execute() { }
     public void Exit() {
 
-        Debug.Log("적 턴 종료.");
+        Debug.Log("Enemy Trun End.");
     }
 
     public IEnumerator Movement(int moveRange, Action onComplete) {
@@ -70,10 +70,15 @@ public class EnemyMove_State : ITurnState{
                 targetPosition.y = 0f;
                 while (Vector3.Distance(activeUnit.transform.position, targetPosition) > 0.01f) {
 
+                    activeUnit.transform.LookAt(targetPosition);
                     activeUnit.transform.position = Vector3.MoveTowards(activeUnit.transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
                     yield return null;
                 }
+                Vector2Int newPosition = new Vector2Int((int)targetPosition.x, (int)targetPosition.z);
+
+                UnitManager.Instance.MoveUnit(newPosition, activeUnit);
+
                 activeUnit.transform.position = targetPosition;
             }
         }

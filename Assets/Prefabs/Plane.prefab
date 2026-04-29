@@ -142,3 +142,4 @@ MonoBehaviour:
   originalMaterial: {fileID: 2100000, guid: 2cc658a28c0b9694ca177b01b708894f, type: 2}
   blockMaterial: {fileID: 2100000, guid: d9f9120b42bb6eb47b1a7a04413c5150, type: 2}
   highlightMaterial: {fileID: 2100000, guid: 43b727c30bd93be49b96fac75f8dddd3, type: 2}
+  attackRangeMaterial: {fileID: 2100000, guid: 9e4a6f13fa3120c4aae9fc5453883c88, type: 2}
