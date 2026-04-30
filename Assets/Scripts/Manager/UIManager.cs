@@ -30,7 +30,7 @@ public class UIManager : MonoBehaviour {
         if (unit.stats is IHealth health) {
             VisualElement canvas = uiDocument.rootVisualElement;
 
-            HealthBarController currentHealthBarCtrl = new HealthBarController(hpBarTempelete, canvas, health);
+            HealthBarController currentHealthBarCtrl = new HealthBarController(hpBarTempelete, canvas, health, unit.unitFaction);
             health.OnHealthModified += currentHealthBarCtrl.UpdateUI;
 
             unit.OnUnitDie += UnregisterUnitUI;

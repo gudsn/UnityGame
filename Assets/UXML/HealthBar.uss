@@ -1,0 +1,15 @@
+
+.unity-progress-bar__background {
+    background-color: rgba(25, 25, 25, 0.9);
+    border-width: 2px;
+    border-color: rgb(0, 0, 0);
+    border-radius: 8px;  
+    overflow: hidden;
+}
+
+.unity-progress-bar__progress {
+    border-radius: 6px; 
+    
+    transition-property: width, background-color;
+    transition-duration: 0.3s;
+}

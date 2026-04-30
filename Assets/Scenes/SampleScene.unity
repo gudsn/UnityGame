@@ -573,6 +573,7 @@ GameObject:
   - component: {fileID: 2064665780}
   - component: {fileID: 2064665779}
   - component: {fileID: 2064665778}
+  - component: {fileID: 2064665784}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -685,6 +686,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitManager
   playerPrefab: {fileID: 2852092759408665874, guid: 79967292da9cb2240b60ad2c49e55400, type: 3}
   enemyPrefab: {fileID: 1111480681435143323, guid: 574f25f4cac5fa74eb8476471c4ed2e9, type: 3}
+--- !u!114 &2064665784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064665775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 466397c45b5339d4bbe0d9be675a8824, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleManager
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
