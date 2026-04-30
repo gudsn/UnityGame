@@ -1,11 +1,17 @@
 using UnityEngine;
+using System.Collections;
 
-public class GameManager : MonoBehaviour{
+public class GameManager : MonoBehaviour {
 
-    void Start(){
+    void Start() {
+        StartCoroutine(GameSetup());
     }
 
-    void Update(){
-            
+    void Update() {
+
+    }
+    IEnumerator GameSetup() {
+        yield return null;
+        UnitManager.Instance.SetWorld();
     }
 }

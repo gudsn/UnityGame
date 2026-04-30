@@ -11,6 +11,7 @@ public class UnitManager : MonoBehaviour
     public Dictionary<Vector2Int, Unit> registeredUnit;
 
     public Action<Unit> OnSpawnUnit;
+    public Action<Dictionary<Vector2Int, Unit>> OnMoveUnit;
 
     public static UnitManager Instance;
     private void Awake() {
@@ -23,16 +24,14 @@ public class UnitManager : MonoBehaviour
         registeredUnit = new Dictionary<Vector2Int, Unit>();
 
     }
-    void Start()
-    {
-        SetWorld();
+    void Start(){
     }
 
-    private void SetWorld() {
+    public void SetWorld() {
         GridSystem.Instance.spawnSquareGrid();
 
         Vector3 playerSpawnPosition = Vector3.zero;
-        Vector3 enemySpawnPosition = new Vector3(3, 0, 4);
+        Vector3 enemySpawnPosition = new Vector3(2, 0, 0);
 
         GameObject playerInstance = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
         if (playerInstance.TryGetComponent(out Unit playerUnit)) {
@@ -75,6 +74,8 @@ public class UnitManager : MonoBehaviour
         registeredUnit.TryAdd(newPosition, unit);
 
         unit.SetPosition(newPosition);
+
+        OnMoveUnit?.Invoke(registeredUnit);
     }
 
     public void KillUnit(Unit unit) {

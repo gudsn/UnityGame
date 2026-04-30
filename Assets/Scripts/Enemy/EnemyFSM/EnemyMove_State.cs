@@ -75,9 +75,11 @@ public class EnemyMove_State : ITurnState{
 
                     yield return null;
                 }
-                Vector2Int newPosition = new Vector2Int((int)targetPosition.x, (int)targetPosition.z);
-
-                UnitManager.Instance.MoveUnit(newPosition, activeUnit);
+                TileData targetTileData = GridSystem.Instance.WorldPositionToGridTile(targetPosition);
+                if (targetTileData != null) {
+                    Vector2Int newGridPosition = new Vector2Int(targetTileData.gridX, targetTileData.gridY);
+                    UnitManager.Instance.MoveUnit(newGridPosition, activeUnit);
+                }
 
                 activeUnit.transform.position = targetPosition;
             }

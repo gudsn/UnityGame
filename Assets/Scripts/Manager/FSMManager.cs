@@ -16,7 +16,8 @@ public class FSMManager : MonoBehaviour
     private int currentTime = 0;
 
     private const int actionValue = 1000;
-    void Start(){
+
+    private void Awake() {
         if (Instance != null) {
             Destroy(gameObject);
             return;
@@ -24,7 +25,8 @@ public class FSMManager : MonoBehaviour
         Instance = this;
 
         unitQueue = new PriorityQueue<Unit>(PriorityQueue<Unit>.HeapType.min);
-
+    }
+    void Start(){
         UnitManager.Instance.OnSpawnUnit += EnqueueNewUnit;
     }
 
@@ -51,7 +53,7 @@ public class FSMManager : MonoBehaviour
     }
 
     public void NextState() {
-        if (unitQueue.Count() <= 1) {
+        if (unitQueue.Count() == 0) {
             Debug.Log("No Unit for play");
             return;
         }

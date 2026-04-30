@@ -12,7 +12,7 @@ public class BattleManager : MonoBehaviour{
         }
 
         UnitManager.Instance.OnSpawnUnit += HaddleNewSpwanedUnit;
-
+        UnitManager.Instance.OnMoveUnit += HanddleUnitPositionUpdate;
     }
 
     // Update is called once per frame
@@ -20,6 +20,7 @@ public class BattleManager : MonoBehaviour{
     {
         
     }
+    
     private void TryAttack(Vector2Int attackPosition, Unit attackUnit) {
         if (currentUnitData.TryGetValue(attackPosition, out Unit targetUnit)) {
             float amount = attackUnit.stats.GetAttackPower();
@@ -29,11 +30,21 @@ public class BattleManager : MonoBehaviour{
 
     private void HaddleNewSpwanedUnit(Unit unit) {
         unit.OnAttack += TryAttack;
+        unit.OnUnitDie += HandleUnitDeath;
     }
 
+    private void HandleUnitDeath(Unit unit) {
+        unit.OnAttack -= TryAttack;        
+        unit.OnUnitDie -= HandleUnitDeath; 
+    }
+
+    private void HanddleUnitPositionUpdate(Dictionary<Vector2Int, Unit>newRegisteredUnit) {
+        currentUnitData = newRegisteredUnit;
+    }
     private void OnDestroy() {
         if (UnitManager.Instance != null) {
             UnitManager.Instance.OnSpawnUnit -= HaddleNewSpwanedUnit;
+            UnitManager.Instance.OnMoveUnit -= HanddleUnitPositionUpdate;
         } 
     }
 }

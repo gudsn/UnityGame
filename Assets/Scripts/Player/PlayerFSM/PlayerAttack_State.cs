@@ -22,27 +22,79 @@ public class PlayerAttack_State:ITurnState{
         PlayerInput.Instance.OnMouseClicked -= AttackTarget;
     }
 
+    /*
     public void AttackTarget(Vector2 cordinate) {
         Ray ray = Camera.main.ScreenPointToRay(cordinate);
 
         if (Physics.Raycast(ray, out RaycastHit hit)) {
-            TileData currentTile = GridSystem.Instance.WorldPositionToGridTile(hit.point);
+
+            Vector3 targetPosition = hit.point;
+
+            Unit clickedUnit = hit.collider.GetComponentInParent<Unit>();
+
+            if (clickedUnit != null) {
+                targetPosition = clickedUnit.transform.position;
+            }
+
+            TileData currentTile = GridSystem.Instance.WorldPositionToGridTile(targetPosition);
 
             if (currentTile != null) {
                 Vector2Int currentCordinate = new Vector2Int(currentTile.gridX, currentTile.gridY);
 
                 if (GridSystem.Instance.checkHighlightedTile(currentTile)) {
+
                     if (UnitManager.Instance.registeredUnit.TryGetValue(currentCordinate, out Unit targetUnit)) {
-                        if (targetUnit.unitFaction != Faction.Enemy) {
-                            activeUnit.transform.LookAt(hit.point);
-                            activeUnit.Attack();
+
+                        if (targetUnit.unitFaction == Faction.Enemy) {
+
+                            Vector3 lookTarget = targetUnit.transform.position;
+                            lookTarget.y = activeUnit.transform.position.y;
+                            activeUnit.transform.LookAt(lookTarget);
+
+                            activeUnit.Attack(currentCordinate);
                         }
                     }
-
                 }
             }
 
             machine.UnitEnd();
+        }
+    }
+    */
+    public void AttackTarget(Vector2 cordinate) {
+        Ray ray = Camera.main.ScreenPointToRay(cordinate);
+
+        if (Physics.Raycast(ray, out RaycastHit hit)) {
+
+            Vector3 targetPosition = hit.point;
+            Unit clickedUnit = hit.collider.GetComponentInParent<Unit>();
+
+            if (clickedUnit != null) {
+                targetPosition = clickedUnit.transform.position;
+            }
+
+            TileData currentTile = GridSystem.Instance.WorldPositionToGridTile(targetPosition);
+
+            if (currentTile != null) {
+                Vector2Int currentCordinate = new Vector2Int(currentTile.gridX, currentTile.gridY);
+
+                if (GridSystem.Instance.checkHighlightedTile(currentTile)) {
+
+                    if (UnitManager.Instance.registeredUnit.TryGetValue(currentCordinate, out Unit targetUnit)) {
+
+                        if (targetUnit.unitFaction == Faction.Enemy) {
+
+                            Vector3 lookTarget = targetUnit.transform.position;
+                            lookTarget.y = activeUnit.transform.position.y;
+                            activeUnit.transform.LookAt(lookTarget);
+
+                            activeUnit.Attack(currentCordinate);
+                        }
+                    }
+                }
+                machine.UnitEnd();
+            }
+            Debug.Log("Out of range.");
         }
     }
 }

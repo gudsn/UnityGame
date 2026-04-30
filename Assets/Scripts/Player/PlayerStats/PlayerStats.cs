@@ -17,12 +17,14 @@ public class PlayerStats : UnitStats
         return CurrentMagicPoint;
     }
     public override float GetAttackPower() {
+        /*
         if (CurrentMagicPoint < 5) {
             Debug.Log("Not enough MP");
             return 0;
         }
 
         ModifyMagicPoint(-5);
+        */
 
         return base.CurrentAttack;
     }

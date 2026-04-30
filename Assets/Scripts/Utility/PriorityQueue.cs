@@ -132,7 +132,7 @@ public class PriorityQueue<T> {
     }
 
     public int Count() {
-        return heap.Count;
+        return tailIndex;
     }
 
     private void ShiftUp(int index) {

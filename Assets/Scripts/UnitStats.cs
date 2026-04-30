@@ -12,6 +12,7 @@ public class UnitStats : IHealth{
         CurrentHealth += amount;
         CurrentHealth = Mathf.Clamp(CurrentHealth, 0, maxHealth);
         OnHealthModified?.Invoke(CurrentHealth);
+        Debug.Log("currentHealth: " + CurrentHealth);
         return CurrentHealth;
     }
 

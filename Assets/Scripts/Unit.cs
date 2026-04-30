@@ -41,12 +41,7 @@ public class Unit : MonoBehaviour {
         }
     }
 
-    public void Attack() {
-        Vector2Int attackDirection = new Vector2Int(
-        Mathf.RoundToInt(this.transform.forward.x),
-        Mathf.RoundToInt(this.transform.forward.z)
-        );
-        Vector2Int attackPosition = attackDirection + currentPosition;
+    public void Attack(Vector2Int attackPosition) {
 
         OnAttack?.Invoke(attackPosition, this);
     }

@@ -13,7 +13,7 @@ public class UIManager : MonoBehaviour {
 
     public static UIManager Instance;
 
-    private void Start() {
+    private void Awake() {
         if (Instance != null) {
             Destroy(gameObject);
             return;
@@ -22,7 +22,8 @@ public class UIManager : MonoBehaviour {
 
         mainCamera = Camera.main;
         registeredUnit = new Dictionary<Unit, HealthBarController>();
-
+    }
+    private void Start() {
         UnitManager.Instance.OnSpawnUnit += RegisterUnitUI;
     }
     public void RegisterUnitUI(Unit unit) {
