@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7895020499584050296}
   - component: {fileID: 127795058242183544}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -57,7 +57,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4287468597812936510}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: UI_Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -90,6 +90,10 @@ PrefabInstance:
     - target: {fileID: 4526335968304645088, guid: 73a62394a1c431a4db5a6f490c985f88, type: 3}
       propertyPath: m_Name
       value: PlayerVisual
+      objectReference: {fileID: 0}
+    - target: {fileID: 4526335968304645088, guid: 73a62394a1c431a4db5a6f490c985f88, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6607029321133359133, guid: 73a62394a1c431a4db5a6f490c985f88, type: 3}
       propertyPath: m_LocalPosition.x

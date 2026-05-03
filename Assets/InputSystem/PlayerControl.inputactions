@@ -16,7 +16,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "SetMovement",
+                    "name": "Enter",
                     "type": "Button",
                     "id": "f38fc2c9-35e4-42aa-9364-9fd5a6fd2e67",
                     "expectedControlType": "",
@@ -25,9 +25,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Click",
+                    "name": "LeftClick",
                     "type": "Button",
                     "id": "68c58dfc-51d2-4a28-818c-1434ba1f468f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RightClick",
+                    "type": "Button",
+                    "id": "84e9ea2f-d0a0-445e-b1f5-62ef2cc416d2",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -97,7 +106,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "SetMovement",
+                    "action": "Enter",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -108,7 +117,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Click",
+                    "action": "LeftClick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f8d4e829-c8e1-44d1-8ff7-0fddf9095c79",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightClick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

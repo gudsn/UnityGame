@@ -1,0 +1,29 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="TooltipRoot" style="flex-grow: 1; position: absolute; top: 0; left: 0;">
+        <ui:VisualElement name="TooltipPanel" style="flex-grow: 1; width: 180px; height: 100px; background-color: rgba(24, 22, 22, 0.87); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; border-left-color: rgba(34, 29, 29, 0.77); border-right-color: rgba(34, 29, 29, 0.77); border-top-color: rgba(34, 29, 29, 0.77); border-bottom-color: rgba(34, 29, 29, 0.77); border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;">
+            <ui:VisualElement name="Header" style="flex-grow: 1; flex-direction: row; justify-content: space-between; height: 25px;">
+                <ui:Label text="Unitname&#10;" name="UnitName" style="font-size: 16px; -unity-font-style: bold; color: rgb(255, 255, 255); -unity-text-outline-width: 0; -unity-text-align: middle-left;"/>
+                <ui:Label text="faction&#10;" name="Faction" style="font-size: 12px; color: rgba(255, 255, 255, 0.8); -unity-text-align: middle-left;"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="Divider" style="flex-grow: 1; height: 1px; width: auto; color: rgb(105, 105, 105); -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgb(29, 25, 25); margin-top: 5px; margin-right: 0; margin-bottom: 5px; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;"/>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; flex-direction: row;">
+                <ui:VisualElement name="HealthContainer" style="flex-grow: 1; flex-direction: column; justify-content: space-around; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; height: 30px;">
+                    <ui:Label text="HP" name="Health" style="height: 10px; font-size: 10px; -unity-text-align: middle-center; color: rgb(161, 54, 73);"/>
+                    <ui:Label text="1/1" name="HealthData" style="font-size: 10px; color: rgb(255, 255, 255); -unity-text-align: middle-center; height: 10px;"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="AttackContainer" style="flex-grow: 1; flex-direction: column; justify-content: space-around; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; height: 30px;">
+                    <ui:Label text="ATT" name="Attack" style="height: 10px; font-size: 10px; -unity-text-align: middle-center; color: rgb(114, 133, 209);"/>
+                    <ui:Label text="10" name="AttackData" style="font-size: 10px; color: rgb(255, 255, 255); -unity-text-align: middle-center; height: 10px;"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="DefenseContainer" style="flex-grow: 1; flex-direction: column; justify-content: space-around; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; height: 30px;">
+                    <ui:Label text="DEF" name="Defense" style="height: 10px; font-size: 10px; -unity-text-align: middle-center; color: rgb(25, 25, 34);"/>
+                    <ui:Label text="5" name="DefenseData" style="font-size: 10px; color: rgb(255, 255, 255); -unity-text-align: middle-center; height: 10px;"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="MoveRangeContainer" style="flex-grow: 1; flex-direction: column; justify-content: space-around; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; height: 30px;">
+                    <ui:Label text="MOV" name="MoveRange" style="height: 10px; font-size: 10px; -unity-text-align: middle-center; color: rgb(65, 118, 44);"/>
+                    <ui:Label text="2" name="MoveRangeData" style="font-size: 10px; color: rgb(255, 255, 255); -unity-text-align: middle-center; height: 10px;"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

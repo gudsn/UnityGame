@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1058536742830985648}
   - component: {fileID: -556590968273616662}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -57,7 +57,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8431007318131045463}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: UI_Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -130,6 +130,10 @@ PrefabInstance:
     - target: {fileID: 6503254374588239099, guid: 07f46471bc768a949afd4fe16fc2d829, type: 3}
       propertyPath: m_Name
       value: EnemyVisual
+      objectReference: {fileID: 0}
+    - target: {fileID: 6503254374588239099, guid: 07f46471bc768a949afd4fe16fc2d829, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -54,6 +54,10 @@ public class Unit : MonoBehaviour {
         return stats.GetHealth();
     }
 
+    public float GetMaxHealth() {
+        return stats.GetMaxHealth();
+    }
+
     public int GetMoveRange() {
         return stats.GetMoveRnage();
     }
@@ -64,6 +68,10 @@ public class Unit : MonoBehaviour {
         Destroy(gameObject, 2f);
 
         Debug.Log("Player can't handle the damage.");
+    }
+
+    public string GetName() {
+        return stats.GetName();
     }
 
 }

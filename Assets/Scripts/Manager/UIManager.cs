@@ -6,10 +6,13 @@ public class UIManager : MonoBehaviour {
 
     [SerializeField]private UIDocument uiDocument;
     [SerializeField]private VisualTreeAsset hpBarTempelete;
+    [SerializeField]private VisualTreeAsset tooltipTemplate;
 
     private Camera mainCamera;
 
     private Dictionary<Unit, HealthBarController> registeredUnit;
+
+    private TooltipController tooltipController;
 
     public static UIManager Instance;
 
@@ -25,6 +28,20 @@ public class UIManager : MonoBehaviour {
     }
     private void Start() {
         UnitManager.Instance.OnSpawnUnit += RegisterUnitUI;
+
+        VisualElement canvas = uiDocument.rootVisualElement;
+
+        tooltipController = new TooltipController(tooltipTemplate, canvas);
+    }
+
+    private void OnEnable() {
+        EventBus<ShowTooltipEvent>.Subscribe(OnShowTooltip);
+        EventBus<HideTooltipEvent>.Subscribe(OnHideTooltip);
+    }
+
+    private void OnDisable() {
+        EventBus<ShowTooltipEvent>.Unsubscribe(OnShowTooltip);
+        EventBus<HideTooltipEvent>.Unsubscribe(OnHideTooltip);
     }
     public void RegisterUnitUI(Unit unit) {
         if (unit.stats is IHealth health) {
@@ -49,6 +66,14 @@ public class UIManager : MonoBehaviour {
             
             currentHealthBarCtrl.Cleanup();
         }
+    }
+
+    private void OnShowTooltip(ShowTooltipEvent evt) {
+        tooltipController.Show(evt.targetUnit, evt.MousePosition);
+    }
+
+    private void OnHideTooltip(HideTooltipEvent evt) {
+        tooltipController.Hide();
     }
 
     public void LateUpdate() {

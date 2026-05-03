@@ -18,7 +18,7 @@ public class PlayerMove_State : ITurnState {
 
         Debug.Log("Player Turn");
         PlayerInput.Instance.OnMoveInputTriggered += HandleIntendedMove;
-        PlayerInput.Instance.OnSetMoveInputTriggered += HandleConfirmMove;
+        PlayerInput.Instance.OnEnterTriggered += HandleConfirmMove;
 
         SpwnGhost();
         GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, moveRange);
@@ -30,7 +30,7 @@ public class PlayerMove_State : ITurnState {
 
     public void Exit() {
         PlayerInput.Instance.OnMoveInputTriggered -= HandleIntendedMove;
-        PlayerInput.Instance.OnSetMoveInputTriggered -= HandleConfirmMove;
+        PlayerInput.Instance.OnEnterTriggered -= HandleConfirmMove;
 
         Object.Destroy(ghostInstance);
         GridSystem.Instance.DeleteManhattanDistanceGrid();

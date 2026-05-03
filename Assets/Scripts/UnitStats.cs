@@ -3,6 +3,12 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public class UnitStats : IHealth{
 
+    //Name
+    public string unitName { get; private set; }
+    public string GetName() {
+        return unitName;
+    }
+
     //Health
     public float maxHealth { get; private set; }
     public float CurrentHealth {get; private set;}
@@ -63,6 +69,8 @@ public class UnitStats : IHealth{
     
     }
     public UnitStats(UnitStatsSO baseState) {
+        this.unitName = baseState.unitName;
+
         this.maxHealth = baseState.maxHealthPoint;
         this.baseAttack = baseState.baseAttackPoint;
         this.baseDefense = baseState.baseDefensePoint;

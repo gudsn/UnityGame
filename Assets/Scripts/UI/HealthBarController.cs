@@ -3,8 +3,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class HealthBarController
-{
+public class HealthBarController{
+
     private ProgressBar hpBar;
     private VisualElement hpBarRoot;
     private VisualElement fillElement;
@@ -24,7 +24,7 @@ public class HealthBarController
         Setup(entity.maxHealth, entity.CurrentHealth);
     }
 
-    public void  Setup(float maxHealth, float currentHealth) {
+    private void  Setup(float maxHealth, float currentHealth) {
         hpBar.highValue = maxHealth;
         hpBar.lowValue = 0;
         hpBar.value = currentHealth;

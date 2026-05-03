@@ -43,6 +43,9 @@ public class GridSystem : MonoBehaviour {
 
         highlightedTileHash = new HashSet<TileData>();
     }
+    public void UnitOnTile(Vector2Int cordinate) {
+        tileData[cordinate.x, cordinate.y].isWalkable = !tileData[cordinate.x, cordinate.y].isWalkable;
+    }
     public void spawnSquareGrid() {
         Vector3 gridLeftBottom = gridCenter - new Vector3((tileSO.numberOfTilesToSpawnX * gridSize) / 2, 0f, (tileSO.numberOfTilesToSpawnY * gridSize) / 2);
 
@@ -104,7 +107,6 @@ public class GridSystem : MonoBehaviour {
                     if (visitedHash.Contains(n)) {
                         continue; // Skip already visited tiles
                     }
-
                     if (n.isWalkable) {
                         checkQueue.Enqueue(n);
                         visitedHash.Add(n);
@@ -177,9 +179,6 @@ public class GridSystem : MonoBehaviour {
 
                 if (gridX < 0 || gridX >= tileSO.numberOfTilesToSpawnX || gridY < 0 || gridY >= tileSO.numberOfTilesToSpawnY) {
                     continue; // Skip out of bounds tiles
-                }
-                if (!tileData[gridX, gridY].isWalkable) {
-                    break;
                 }
 
                 neighbourTile.Add(tileData[gridX, gridY]);

@@ -102,7 +102,7 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""SetMovement"",
+                    ""name"": ""Enter"",
                     ""type"": ""Button"",
                     ""id"": ""f38fc2c9-35e4-42aa-9364-9fd5a6fd2e67"",
                     ""expectedControlType"": """",
@@ -111,9 +111,18 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Click"",
+                    ""name"": ""LeftClick"",
                     ""type"": ""Button"",
                     ""id"": ""68c58dfc-51d2-4a28-818c-1434ba1f468f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""84e9ea2f-d0a0-445e-b1f5-62ef2cc416d2"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -183,7 +192,7 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""SetMovement"",
+                    ""action"": ""Enter"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -194,7 +203,18 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Click"",
+                    ""action"": ""LeftClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f8d4e829-c8e1-44d1-8ff7-0fddf9095c79"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightClick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -206,8 +226,9 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Movement = m_Player.FindAction("Movement", throwIfNotFound: true);
-        m_Player_SetMovement = m_Player.FindAction("SetMovement", throwIfNotFound: true);
-        m_Player_Click = m_Player.FindAction("Click", throwIfNotFound: true);
+        m_Player_Enter = m_Player.FindAction("Enter", throwIfNotFound: true);
+        m_Player_LeftClick = m_Player.FindAction("LeftClick", throwIfNotFound: true);
+        m_Player_RightClick = m_Player.FindAction("RightClick", throwIfNotFound: true);
     }
 
     ~@PlayerControl()
@@ -289,8 +310,9 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Movement;
-    private readonly InputAction m_Player_SetMovement;
-    private readonly InputAction m_Player_Click;
+    private readonly InputAction m_Player_Enter;
+    private readonly InputAction m_Player_LeftClick;
+    private readonly InputAction m_Player_RightClick;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -307,13 +329,17 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Movement => m_Wrapper.m_Player_Movement;
         /// <summary>
-        /// Provides access to the underlying input action "Player/SetMovement".
+        /// Provides access to the underlying input action "Player/Enter".
         /// </summary>
-        public InputAction @SetMovement => m_Wrapper.m_Player_SetMovement;
+        public InputAction @Enter => m_Wrapper.m_Player_Enter;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Click".
+        /// Provides access to the underlying input action "Player/LeftClick".
         /// </summary>
-        public InputAction @Click => m_Wrapper.m_Player_Click;
+        public InputAction @LeftClick => m_Wrapper.m_Player_LeftClick;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/RightClick".
+        /// </summary>
+        public InputAction @RightClick => m_Wrapper.m_Player_RightClick;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -343,12 +369,15 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
             @Movement.started += instance.OnMovement;
             @Movement.performed += instance.OnMovement;
             @Movement.canceled += instance.OnMovement;
-            @SetMovement.started += instance.OnSetMovement;
-            @SetMovement.performed += instance.OnSetMovement;
-            @SetMovement.canceled += instance.OnSetMovement;
-            @Click.started += instance.OnClick;
-            @Click.performed += instance.OnClick;
-            @Click.canceled += instance.OnClick;
+            @Enter.started += instance.OnEnter;
+            @Enter.performed += instance.OnEnter;
+            @Enter.canceled += instance.OnEnter;
+            @LeftClick.started += instance.OnLeftClick;
+            @LeftClick.performed += instance.OnLeftClick;
+            @LeftClick.canceled += instance.OnLeftClick;
+            @RightClick.started += instance.OnRightClick;
+            @RightClick.performed += instance.OnRightClick;
+            @RightClick.canceled += instance.OnRightClick;
         }
 
         /// <summary>
@@ -363,12 +392,15 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
             @Movement.started -= instance.OnMovement;
             @Movement.performed -= instance.OnMovement;
             @Movement.canceled -= instance.OnMovement;
-            @SetMovement.started -= instance.OnSetMovement;
-            @SetMovement.performed -= instance.OnSetMovement;
-            @SetMovement.canceled -= instance.OnSetMovement;
-            @Click.started -= instance.OnClick;
-            @Click.performed -= instance.OnClick;
-            @Click.canceled -= instance.OnClick;
+            @Enter.started -= instance.OnEnter;
+            @Enter.performed -= instance.OnEnter;
+            @Enter.canceled -= instance.OnEnter;
+            @LeftClick.started -= instance.OnLeftClick;
+            @LeftClick.performed -= instance.OnLeftClick;
+            @LeftClick.canceled -= instance.OnLeftClick;
+            @RightClick.started -= instance.OnRightClick;
+            @RightClick.performed -= instance.OnRightClick;
+            @RightClick.canceled -= instance.OnRightClick;
         }
 
         /// <summary>
@@ -417,18 +449,25 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMovement(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "SetMovement" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Enter" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSetMovement(InputAction.CallbackContext context);
+        void OnEnter(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Click" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "LeftClick" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnClick(InputAction.CallbackContext context);
+        void OnLeftClick(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "RightClick" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRightClick(InputAction.CallbackContext context);
     }
 }
