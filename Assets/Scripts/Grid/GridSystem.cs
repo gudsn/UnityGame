@@ -20,6 +20,8 @@ public class GridSystem : MonoBehaviour {
     // grid init data
     private Vector3 gridCenter = Vector3.zero;
     private int gridSize = 1;
+    private int maxSpwanX;
+    private int maxSpwanY;
 
     private HashSet<TileData> highlightedTileHash;
 
@@ -38,8 +40,11 @@ public class GridSystem : MonoBehaviour {
 
         gridCenter = transform.position;
 
-        tileData = new TileData[tileSO.numberOfTilesToSpawnX, tileSO.numberOfTilesToSpawnY];
-        tileScript = new TileScript[tileSO.numberOfTilesToSpawnX, tileSO.numberOfTilesToSpawnY];
+        maxSpwanX = tileSO.numberOfTilesToSpawnX;
+        maxSpwanY = tileSO.numberOfTilesToSpawnY;
+
+        tileData = new TileData[maxSpwanX, maxSpwanY];
+        tileScript = new TileScript[maxSpwanX, maxSpwanY];
 
         highlightedTileHash = new HashSet<TileData>();
     }
@@ -47,10 +52,10 @@ public class GridSystem : MonoBehaviour {
         tileData[cordinate.x, cordinate.y].isWalkable = !tileData[cordinate.x, cordinate.y].isWalkable;
     }
     public void spawnSquareGrid() {
-        Vector3 gridLeftBottom = gridCenter - new Vector3((tileSO.numberOfTilesToSpawnX * gridSize) / 2, 0f, (tileSO.numberOfTilesToSpawnY * gridSize) / 2);
+        Vector3 gridLeftBottom = gridCenter - new Vector3((maxSpwanX * gridSize) / 2, 0f, (maxSpwanY * gridSize) / 2);
 
-        for (int gridX = 0; gridX < tileSO.numberOfTilesToSpawnX; gridX++) {
-            for (int gridY = 0; gridY < tileSO.numberOfTilesToSpawnY; gridY++) {
+        for (int gridX = 0; gridX < maxSpwanX; gridX++) {
+            for (int gridY = 0; gridY < maxSpwanY; gridY++) {
 
                 Vector3 spawnPosition = gridLeftBottom + new Vector3(gridX * gridSize, 0, gridY * gridSize);
 
@@ -71,10 +76,10 @@ public class GridSystem : MonoBehaviour {
     }
 
     public TileData WorldPositionToGridTile(Vector3 worldPosition) {
-        int gridX = Mathf.FloorToInt((worldPosition.x - (gridCenter.x - (tileSO.numberOfTilesToSpawnX * gridSize) / 2)) / gridSize);
-        int gridY = Mathf.FloorToInt((worldPosition.z - (gridCenter.z - (tileSO.numberOfTilesToSpawnY * gridSize) / 2)) / gridSize);
+        int gridX = Mathf.FloorToInt((worldPosition.x - (gridCenter.x - (maxSpwanX * gridSize) / 2)) / gridSize);
+        int gridY = Mathf.FloorToInt((worldPosition.z - (gridCenter.z - (maxSpwanY * gridSize) / 2)) / gridSize);
 
-        if (gridX < 0 || gridX >= tileSO.numberOfTilesToSpawnX || gridY < 0 || gridY >= tileSO.numberOfTilesToSpawnY) {
+        if (gridX < 0 || gridX >= maxSpwanX || gridY < 0 || gridY >= maxSpwanY) {
             return null; // Return null if the world position is outside the grid bounds
         }
         else {
@@ -143,10 +148,23 @@ public class GridSystem : MonoBehaviour {
             highlightedTileHash.Add(tile);
         }
     }
-    public int GetManhattanDistance(Vector3 start, Vector3 end) {
-        int distance = Mathf.Abs((int)start.x - (int)end.x);
-        distance += Mathf.Abs((int)start.y - (int)end.y);
+
+    public int GetManhattanDistance(Vector2Int startCordinate, Vector2Int endcordinate) {
+        int distance = Mathf.Abs(startCordinate.x - endcordinate.x);
+        distance += Mathf.Abs(startCordinate.y - endcordinate.y);
         return distance;
+    }
+
+    public int GetManhattanDistance(Vector3 start, Vector3 end) {
+        TileData startTile = WorldPositionToGridTile(start);
+        TileData endTile = WorldPositionToGridTile(end);
+
+        if (startTile == null || endTile == null) return 9999;
+
+        Vector2Int startPos = new Vector2Int(startTile.gridX, startTile.gridY);
+        Vector2Int endPos = new Vector2Int(endTile.gridX, endTile.gridY);
+
+        return GetManhattanDistance(startPos, endPos);
     }
     public void DeleteAttackRange() {
         if (highlightedTileHash.Count > 0) {
@@ -177,7 +195,7 @@ public class GridSystem : MonoBehaviour {
                 int gridX = currentTile.gridX + currentDir.x;
                 int gridY = currentTile.gridY + currentDir.y;
 
-                if (gridX < 0 || gridX >= tileSO.numberOfTilesToSpawnX || gridY < 0 || gridY >= tileSO.numberOfTilesToSpawnY) {
+                if (gridX < 0 || gridX >= maxSpwanX || gridY < 0 || gridY >= maxSpwanY) {
                     continue; // Skip out of bounds tiles
                 }
 
@@ -242,7 +260,7 @@ public class GridSystem : MonoBehaviour {
             neighbourList = FindTileNeighbours(currentNode.tile, 1);
 
             foreach (TileData tile in neighbourList) {
-                if (!tile.isWalkable) {
+                if (!tile.isWalkable && tile != end) {
                     continue;
                 }
                 if (closedHash.Contains(tile)) {
@@ -281,10 +299,19 @@ public class GridSystem : MonoBehaviour {
     }
     public Node InsertNode(TileData tile, TileData target, Node parent) {
         int gCost = parent.gCost + 10;
-        int hCost = GetManhattanDistance(tile.worldPosition, target.worldPosition) * 10;
+
+        Vector2Int tileCoord = new Vector2Int(tile.gridX, tile.gridY);
+        Vector2Int targetCoord = new Vector2Int(target.gridX, target.gridY);
+        int hCost = GetManhattanDistance(tileCoord, targetCoord) * 10;
 
         return new Node(tile, parent, gCost, hCost);
     }
 
+    public TileData GetTileData(Vector2Int cordinate) {
+        if ((cordinate.x < 0 || cordinate.x >= maxSpwanX) || (cordinate.y < 0 || cordinate.y >= maxSpwanY)) {
+            return null;
+        }
+        return tileData[cordinate.x, cordinate.y];
+    }
 }
 

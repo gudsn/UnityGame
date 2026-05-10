@@ -519,6 +519,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
   uiDocument: {fileID: 1306128839}
   hpBarTempelete: {fileID: 9197481963319205126, guid: 06589d85f868b7e49a383c3815ae04a1, type: 3}
+  tooltipTemplate: {fileID: 9197481963319205126, guid: 8ab7a6d684ab09d45bcd5bc3317efc5b, type: 3}
 --- !u!114 &1306128839
 MonoBehaviour:
   m_ObjectHideFlags: 0

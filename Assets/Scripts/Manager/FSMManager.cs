@@ -7,7 +7,7 @@ public class FSMManager : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     [SerializeField]private PlayerFSM playerFSM;
-    [SerializeField]private EnemyFSM enemyFSM;
+    [SerializeField]private EnemyController enemyController;
 
     public static FSMManager Instance { get; private set;}
 
@@ -74,7 +74,7 @@ public class FSMManager : MonoBehaviour
                 playerFSM.StartTurnfor(activeUnit);
                 break;
             case Faction.Enemy:
-                enemyFSM.StartTurnfor(activeUnit);
+                enemyController.StartTurnfor(activeUnit);
                 break;
         } 
     }
