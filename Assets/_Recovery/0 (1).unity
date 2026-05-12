@@ -573,7 +573,6 @@ GameObject:
   - component: {fileID: 2064665781}
   - component: {fileID: 2064665780}
   - component: {fileID: 2064665779}
-  - component: {fileID: 2064665778}
   - component: {fileID: 2064665784}
   - component: {fileID: 2064665785}
   m_Layer: 0
@@ -610,18 +609,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2064665778
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2064665775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c5baf80b3829804c9c4151f56c35151, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyFSM
 --- !u!114 &2064665779
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -659,7 +646,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FSMManager
   playerFSM: {fileID: 2064665780}
-  enemyFSM: {fileID: 2064665778}
   enemyController: {fileID: 2064665785}
 --- !u!114 &2064665782
 MonoBehaviour:

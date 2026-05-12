@@ -74,6 +74,13 @@ public class PlayerMove_State : ITurnState {
     private void SpwnGhost() {
         ghostInstance = Object.Instantiate(activeUnit.ghostPrefab, activeUnit.transform.position, Quaternion.identity);
 
+        int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
+        ghostInstance.layer = ignoreRaycastLayer;
+
+        foreach (Transform child in ghostInstance.GetComponentsInChildren<Transform>()) {
+            child.gameObject.layer = ignoreRaycastLayer;
+        }
+
         Renderer ghostRenderer = ghostInstance.GetComponentInChildren<Renderer>();
 
         ghostPosition = activeUnit.transform.position;

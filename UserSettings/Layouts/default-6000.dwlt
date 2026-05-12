@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2560
     height: 1349
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Game
   m_RootView: {fileID: 8}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -102,7 +102,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 56}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 210
+  controlID: 43
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -128,7 +128,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 254
+  controlID: 17
   draggingID: 0
 --- !u!114 &6
 MonoBehaviour:
@@ -279,7 +279,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 112}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 255
+  controlID: 18
   draggingID: 0
 --- !u!114 &12
 MonoBehaviour:
@@ -692,7 +692,7 @@ MonoBehaviour:
     m_SkipHidden: 1
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scripts/Enemy/EnemyFSM
+    - Assets/ScriptableObjects/Stats
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -714,8 +714,16 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
+    - m_Data: 45932
+    - m_Data: 45934
+    - m_Data: 45936
+    - m_Data: 45938
     - m_Data: 45940
     - m_Data: 45942
+    - m_Data: 45944
+    - m_Data: 45946
+    - m_Data: 45948
+    - m_Data: 45950
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -742,15 +750,23 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 110}
+    scrollPos: {x: 0, y: 0}
     m_SelectedIDs:
-    - m_Data: 45496
+    - m_Data: 45292
     m_LastClickedID:
-      m_Data: 45496
+      m_Data: 45292
     m_ExpandedIDs:
     - m_Data: 0
+    - m_Data: 45932
+    - m_Data: 45934
+    - m_Data: 45936
+    - m_Data: 45938
     - m_Data: 45940
     - m_Data: 45942
+    - m_Data: 45944
+    - m_Data: 45946
+    - m_Data: 45948
+    - m_Data: 45950
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -778,8 +794,8 @@ MonoBehaviour:
       m_ResourceFile: 
   m_ListAreaState:
     m_SelectedInstanceIDs:
-    - m_Data: 45496
-    m_LastClickedInstanceID: 45496
+    - m_Data: 45292
+    m_LastClickedInstanceID: 45292
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: []
     m_RenameOverlay:
@@ -907,7 +923,7 @@ MonoBehaviour:
       m_LastClickedID:
         m_Data: 0
       m_ExpandedIDs:
-      - m_Data: -1820
+      - m_Data: -1296
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
