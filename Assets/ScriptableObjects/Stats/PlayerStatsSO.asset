@@ -15,7 +15,7 @@ MonoBehaviour:
   unitName: Player
   defaultFaction: 0
   maxHealthPoint: 100
-  baseAttackPoint: 20
+  baseAttackPoint: 10
   baseDefensePoint: 5
   moveRange: 3
   unitSpeed: 11

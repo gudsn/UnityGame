@@ -88,38 +88,11 @@ public class GridSystem : MonoBehaviour {
     }
 
     public void SpawnManhattanDistanceGrid(Vector3 worldPosition, int range) {
-        HashSet<TileData> visitedHash = new HashSet<TileData>();
-        Queue<TileData> checkQueue = new Queue<TileData>();
-        List<TileData> neighbourList = new List<TileData>();
-
         TileData startTile = WorldPositionToGridTile(worldPosition);
 
-        checkQueue.Enqueue(startTile);
-        visitedHash.Add(startTile);
+        if (startTile == null) return;
 
-        if (range == 0) {
-            return;
-        }
-
-        for (int currentRange = 1; currentRange <= range; currentRange++) {
-            int currentQueueCount = checkQueue.Count;
-            for (int queueCount = 0; queueCount < currentQueueCount; queueCount++) {
-                TileData currentTile = checkQueue.Dequeue();
-
-                neighbourList = FindTileNeighbours(currentTile, 1);
-
-                foreach (TileData n in neighbourList) {
-                    if (visitedHash.Contains(n)) {
-                        continue; // Skip already visited tiles
-                    }
-                    if (n.isWalkable) {
-                        checkQueue.Enqueue(n);
-                        visitedHash.Add(n);
-                    }
-                }
-
-            }
-        }
+        HashSet<TileData> visitedHash = GetManhattanGrid(startTile, range);
 
         foreach (TileData tile in visitedHash) {
             TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
@@ -135,6 +108,39 @@ public class GridSystem : MonoBehaviour {
             }
             highlightedTileHash.Clear();
         }
+    }
+
+    public HashSet<TileData> GetManhattanGrid(TileData startTile, int range) {
+        HashSet<TileData> visitedHash = new HashSet<TileData>();
+
+        if (range < 0) {
+            return visitedHash;
+        }
+
+        Queue<TileData> checkQueue = new Queue<TileData>();
+
+        checkQueue.Enqueue(startTile);
+        visitedHash.Add(startTile);
+
+        for (int currentRange = 1; currentRange <= range; currentRange++) {
+            int currentQueueCount = checkQueue.Count;
+
+            for (int queueCount = 0; queueCount < currentQueueCount; queueCount++) {
+                TileData currentTile = checkQueue.Dequeue();
+
+                List<TileData> neighbourList = FindTileNeighbours(currentTile, 1);
+
+                foreach (TileData n in neighbourList) {
+                    if (visitedHash.Contains(n) || !n.isWalkable) {
+                        continue;
+                    }
+
+                    checkQueue.Enqueue(n);
+                    visitedHash.Add(n);
+                }
+            }
+        }
+        return visitedHash;
     }
 
     public void SpawnAttackRange(Vector3 currentPosition, int attackRange) {

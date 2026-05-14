@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class EnemyBrain : MonoBehaviour {
@@ -23,6 +26,14 @@ public class EnemyBrain : MonoBehaviour {
             currentDecision = attackDecision;
         }
 
+        AIDecision fleeDecision = EvaluateFleeDecision();
+        if (fleeDecision != null && fleeDecision.utilityScore > currentDecision.utilityScore) {
+            currentDecision = fleeDecision;
+        }
+
+        Debug.Log($"[{currentUnit.GetName()}의 턴] 최종 결정: {currentDecision.actionType}, " +
+              $"이동할 목적지: ({currentDecision.destinationTile?.gridX}, {currentDecision.destinationTile?.gridY}), " +
+              $"부여된 점수: {currentDecision.utilityScore}점");
         return currentDecision;
     }
 
@@ -49,7 +60,20 @@ public class EnemyBrain : MonoBehaviour {
             // 2. 점수 계산 (거리 및 체력 상황 등)
             int dist = GridSystem.Instance.GetManhattanDistance(currentUnit.currentPosition,
                        new Vector2Int(engageData.destinationTile.gridX, engageData.destinationTile.gridY));
-            currentTargetScore += (dist == 0) ? 50f : (1f / dist) * 100f;
+            currentTargetScore += (dist == 0) ? 50f : (1f / dist) * 50f;
+
+            float currentUnitAttackPower = currentUnit.stats.GetAttackPower();
+            if (engageData.targetUnit != null) {
+                float targetHp = engageData.targetUnit.GetHealth();
+                float agressivePoint = (currentUnitAttackPower / targetHp) * 50;
+
+                if (agressivePoint > 50) {
+                    currentTargetScore += 50;
+                }
+                else {
+                    currentTargetScore += agressivePoint;
+                }
+            }
 
             // 점수와 행동 타입을 결과에 명시적으로 주입
             engageData.utilityScore = currentTargetScore;
@@ -76,10 +100,10 @@ public class EnemyBrain : MonoBehaviour {
             return new AIDecision {
                 destinationTile = startTile,
                 targetUnit = null,
-                actionType = AIActionType.Wait
+                actionType = AIActionType.Wait 
             };
         }
-
+         
         // 적이 서 있는 타일은 경로에서 제거 (겹침 방지)
         if (A_PathTile.Contains(endTile)) A_PathTile.Remove(endTile);
 
@@ -117,5 +141,94 @@ public class EnemyBrain : MonoBehaviour {
             destinationTile = destinationTile
             // actionType은 여기서 정해도 되지만, 평가 단계(Evaluate)에서 정하는 것이 더 유연합니다.
         };
+    }
+
+    private AIDecision EvaluateFleeDecision() {
+        float highestScore = -1f;
+        AIActionType aiAction = AIActionType.Wait;
+        TileData destinationTile = null;
+
+        foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.registeredUnit) {
+            Unit targetUnit = it.Value;
+            float currentScore = 0;
+
+            if (currentUnit.unitFaction == targetUnit.unitFaction || targetUnit.GetHealth() <= 0) {
+                continue;
+            }
+            TileData currentTile = GetFleeTile(targetUnit);
+
+            if (currentTile == null) {
+                continue;
+            }
+
+            float currentUnitHealth = currentUnit.GetHealth();
+            float targetUnitHealth = targetUnit.GetHealth();
+
+            float currentUnitHealthRatio = currentUnitHealth / currentUnit.GetMaxHealth();
+            float targetUnitHealthRatio = targetUnitHealth / targetUnit.GetMaxHealth();
+
+            if (currentUnitHealthRatio < 0.3) {
+                currentScore += (float)(0.3 - currentUnitHealthRatio) * 200;
+            }
+
+            if (currentUnitHealthRatio < targetUnitHealthRatio ||currentUnitHealth < targetUnitHealth) {
+                float ratioGap = Mathf.Max(0, targetUnitHealthRatio - currentUnitHealthRatio);
+                currentScore += ratioGap * 40;
+
+                if (targetUnitHealth > currentUnitHealth) {
+                    float hpGap = (targetUnitHealth / Mathf.Max(1f, currentUnitHealth));
+                    if (hpGap < 2) {
+                        currentScore += hpGap * 20;
+                    }
+                    else {
+                        currentScore += 40;
+                    }
+                }
+            }
+
+            if (currentScore > highestScore) {
+                highestScore = currentScore;
+                aiAction = AIActionType.Flee;
+                destinationTile = currentTile;
+            }
+        }
+
+
+
+        return new AIDecision {
+        actionType = aiAction,
+        destinationTile = destinationTile,
+        utilityScore = highestScore
+        };
+
+
+
+    }
+
+    private TileData GetFleeTile(Unit targetUnit) {
+        TileData startTile = GridSystem.Instance.GetTileData(currentUnit.currentPosition);
+        int moveRange = currentUnit.GetMoveRange();
+
+        // 1. 이동 가능한 모든 타일 가져오기
+        HashSet<TileData> walkableTiles = GridSystem.Instance.GetManhattanGrid(startTile, moveRange);
+
+        int maxDistance = -1; // 최대 거리를 추적 (0보다 작게 시작)
+        TileData destinationTile = null;
+
+        // 2. 도달 가능한 타일 중 적과 가장 먼 타일 찾기
+        foreach (TileData tile in walkableTiles) {
+            Vector2Int currentTileCordinate = new Vector2Int(tile.gridX, tile.gridY);
+
+            // 거리를 한 번만 계산하여 변수에 저장 (최적화)
+            int currentDistance = GridSystem.Instance.GetManhattanDistance(currentTileCordinate, targetUnit.currentPosition);
+
+            // 현재 계산한 거리가 지금까지 찾은 최대 거리보다 멀다면 갱신
+            if (currentDistance > maxDistance) {
+                maxDistance = currentDistance;
+                destinationTile = tile;
+            }
+        }
+
+        return destinationTile;
     }
 }

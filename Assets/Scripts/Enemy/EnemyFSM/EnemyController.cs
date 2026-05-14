@@ -31,6 +31,9 @@ public class EnemyController : MonoBehaviour{
                 Actions.Enqueue(new EnemyMove_State(this, currentDecision.destinationTile));
                 Actions.Enqueue(new EnemyAttack_State(this, currentDecision.targetUnit));
                 break;
+            case AIActionType.Flee:
+                Actions.Enqueue(new EnemyMove_State(this, currentDecision.destinationTile));
+                break;
         }
         ExecuteNextAction();
     }

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public enum AIActionType {
     Attack,
+    Flee,
     Wait
 }
 
