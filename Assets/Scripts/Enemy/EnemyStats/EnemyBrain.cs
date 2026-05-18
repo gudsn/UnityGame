@@ -94,7 +94,9 @@ public class EnemyBrain : MonoBehaviour {
             // 2. 점수 계산 (거리 및 체력 상황 등)
             int dist = GridSystem.Instance.GetManhattanDistance(currentUnit.currentPosition,
                        new Vector2Int(engageData.destinationTile.gridX, engageData.destinationTile.gridY));
-            currentTargetScore += (dist == 0) ? 50f : (1f / dist) * 50f;
+            // [개선] 거리 점수를 더 완만하게 계산 (거리가 좀 멀어도 추격하도록)
+            float distanceScore = (dist == 0) ? 60f : Mathf.Max(0, 60f - (dist * 5f));
+            currentTargetScore += distanceScore;
 
             float currentUnitAttackPower = currentUnit.stats.GetAttackPower();
             if (engageData.targetUnit != null) {
