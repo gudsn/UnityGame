@@ -45,7 +45,7 @@ public class PlayerMove_State : ITurnState {
         if (ghostTile == null) {
             return;
         }
-        if (!ghostTile.isWalkable) {
+        if (!ghostTile.isWalkable || ghostTile.isOccupide) {
             return;
         }
         if (!GridSystem.Instance.checkHighlightedTile(ghostTile)) {

@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class EnemyBrain : MonoBehaviour {
     private Unit currentUnit;
+    private int chaseTurn = 0;
 
     private void Awake() {
         currentUnit = GetComponent<Unit>();
@@ -15,17 +16,49 @@ public class EnemyBrain : MonoBehaviour {
         // 기본값: 제자리 대기
         AIDecision currentDecision = new AIDecision {
             actionType = AIActionType.Wait,
-            utilityScore = 0f, // 대기 점수를 최소 0점으로 설정
-            destinationTile = GridSystem.Instance.GetTileData(currentUnit.currentPosition)
+            utilityScore = 20f,
         };
 
-        // 공격 옵션 평가
-        AIDecision attackDecision = EvaluateAttackOptions();
+        int attackRange = 1;
+        TileData currentTile = GridSystem.Instance.GetTileData(currentUnit.currentPosition);
+        int currentUnitChaseRange = currentUnit.GetMoveRange() + attackRange;
 
-        if (attackDecision != null && attackDecision.utilityScore > currentDecision.utilityScore) {
-            currentDecision = attackDecision;
+        HashSet<TileData> currentUnitChase = GridSystem.Instance.GetManhattanGrid(currentTile, currentUnitChaseRange);
+
+        bool isEnemyInSight = false;
+
+        if (currentUnitChase != null) {
+            foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.registeredUnit) {
+                Unit checkUnit = it.Value;
+
+                if (currentUnit.unitFaction == checkUnit.unitFaction || checkUnit.GetHealth() <= 0) continue;
+
+                TileData checkTile = GridSystem.Instance.GetTileData(checkUnit.currentPosition);
+
+                if (currentUnitChase.Contains(checkTile)) {
+                    isEnemyInSight = true;
+                    break;
+                }
+            }
         }
 
+        if (isEnemyInSight) {
+            chaseTurn = 3; // 시야에 적이 있으면 추격 의지 MAX
+        }
+        else if (chaseTurn > 0) {
+            chaseTurn -= 1; // 시야에서 사라지면 매 턴마다 흥분이 가라앉음
+        }
+
+        // 공격 옵션 평가 (어그로가 남아있을 때만)
+        if (chaseTurn > 0) {
+            AIDecision attackDecision = EvaluateAttackOptions();
+
+            if (attackDecision != null && attackDecision.utilityScore > currentDecision.utilityScore) {
+                currentDecision = attackDecision;
+            }
+        }
+
+        // 도망 옵션 평가 (언제나 생존은 최우선)
         AIDecision fleeDecision = EvaluateFleeDecision();
         if (fleeDecision != null && fleeDecision.utilityScore > currentDecision.utilityScore) {
             currentDecision = fleeDecision;
@@ -33,7 +66,8 @@ public class EnemyBrain : MonoBehaviour {
 
         Debug.Log($"[{currentUnit.GetName()}의 턴] 최종 결정: {currentDecision.actionType}, " +
               $"이동할 목적지: ({currentDecision.destinationTile?.gridX}, {currentDecision.destinationTile?.gridY}), " +
-              $"부여된 점수: {currentDecision.utilityScore}점");
+              $"부여된 점수: {currentDecision.utilityScore}점 (남은 추격턴: {chaseTurn})");
+
         return currentDecision;
     }
 
@@ -144,7 +178,9 @@ public class EnemyBrain : MonoBehaviour {
     }
 
     private AIDecision EvaluateFleeDecision() {
-        float highestScore = -1f;
+        float highestScore = 0f;
+
+        // 범위 내에 적이 없거나 도망칠 필요가 없으면 기본적으로 Wait 상태를 유지합니다.
         AIActionType aiAction = AIActionType.Wait;
         TileData destinationTile = null;
 
@@ -155,12 +191,22 @@ public class EnemyBrain : MonoBehaviour {
             if (currentUnit.unitFaction == targetUnit.unitFaction || targetUnit.GetHealth() <= 0) {
                 continue;
             }
+
+            // 🛑 [거리 체크 필터링] 적이 시야 밖이고, 내가 추격 중(chaseTurn)도 아니라면 무시!
+            int distanceToTarget = GridSystem.Instance.GetManhattanDistance(currentUnit.currentPosition, targetUnit.currentPosition);
+            int safeDistance = currentUnit.GetMoveRange() + 1; // 내 시야 범위
+
+            if (distanceToTarget > safeDistance && chaseTurn <= 0) {
+                continue;
+            }
+
             TileData currentTile = GetFleeTile(targetUnit);
 
             if (currentTile == null) {
                 continue;
             }
 
+            // --- 체력 점수 계산 로직 ---
             float currentUnitHealth = currentUnit.GetHealth();
             float targetUnitHealth = targetUnit.GetHealth();
 
@@ -171,7 +217,7 @@ public class EnemyBrain : MonoBehaviour {
                 currentScore += (float)(0.3 - currentUnitHealthRatio) * 200;
             }
 
-            if (currentUnitHealthRatio < targetUnitHealthRatio ||currentUnitHealth < targetUnitHealth) {
+            if (currentUnitHealthRatio < targetUnitHealthRatio || currentUnitHealth < targetUnitHealth) {
                 float ratioGap = Mathf.Max(0, targetUnitHealthRatio - currentUnitHealthRatio);
                 currentScore += ratioGap * 40;
 
@@ -186,23 +232,21 @@ public class EnemyBrain : MonoBehaviour {
                 }
             }
 
+            // 최고 점수 갱신 시 Flee 액션으로 설정
             if (currentScore > highestScore) {
                 highestScore = currentScore;
+
+                // ✨ 새로 만드신 Flee 액션을 여기에 연결합니다!
                 aiAction = AIActionType.Flee;
                 destinationTile = currentTile;
             }
         }
 
-
-
         return new AIDecision {
-        actionType = aiAction,
-        destinationTile = destinationTile,
-        utilityScore = highestScore
+            actionType = aiAction,
+            destinationTile = destinationTile,
+            utilityScore = highestScore
         };
-
-
-
     }
 
     private TileData GetFleeTile(Unit targetUnit) {

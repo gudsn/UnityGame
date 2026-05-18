@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Transactions;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -40,7 +41,7 @@ public class UnitManager : MonoBehaviour
 
             playerUnit.SetPosition(playerGridPos);
             SpawnUnit(playerUnit);
-            GridSystem.Instance.UnitOnTile(playerGridPos);
+            GridSystem.Instance.SetTileOccupide(playerGridPos, true);
         }
 
         GameObject enemyInstance = Instantiate(enemyPrefab, enemySpawnPosition, Quaternion.identity);
@@ -50,7 +51,7 @@ public class UnitManager : MonoBehaviour
 
             enemyUnit.SetPosition(enemyGridPos);
             SpawnUnit(enemyUnit);
-            GridSystem.Instance.UnitOnTile(enemyGridPos);
+            GridSystem.Instance.SetTileOccupide(enemyGridPos, true);
         }
 
         FSMManager.Instance.StartState();
@@ -71,14 +72,14 @@ public class UnitManager : MonoBehaviour
 
         if (registeredUnit.ContainsKey(oldPosition) && registeredUnit[oldPosition] == unit) {
             registeredUnit.Remove(oldPosition); 
-            GridSystem.Instance.UnitOnTile(oldPosition);
+            GridSystem.Instance.SetTileOccupide(oldPosition, false);
         }
 
         registeredUnit.TryAdd(newPosition, unit);
 
         unit.SetPosition(newPosition);
 
-        GridSystem.Instance.UnitOnTile(newPosition);
+        GridSystem.Instance.SetTileOccupide(newPosition, true);
 
         OnMoveUnit?.Invoke(registeredUnit);
     }
@@ -86,7 +87,7 @@ public class UnitManager : MonoBehaviour
     public void KillUnit(Unit unit) {
         Vector2Int currentPosition = unit.currentPosition;
 
-        GridSystem.Instance.UnitOnTile(currentPosition);
+        GridSystem.Instance.SetTileOccupide(currentPosition, false);
 
         if (registeredUnit.ContainsKey(currentPosition) && registeredUnit[currentPosition] == unit) {
             registeredUnit.Remove(unit.currentPosition);

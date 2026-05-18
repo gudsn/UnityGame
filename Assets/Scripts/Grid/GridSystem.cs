@@ -48,8 +48,11 @@ public class GridSystem : MonoBehaviour {
 
         highlightedTileHash = new HashSet<TileData>();
     }
-    public void UnitOnTile(Vector2Int cordinate) {
-        tileData[cordinate.x, cordinate.y].isWalkable = !tileData[cordinate.x, cordinate.y].isWalkable;
+   
+    public void SetTileOccupide(Vector2Int cordinate, bool status) {
+        if (cordinate.x < maxSpwanX && cordinate.x >= 0 && cordinate.y < maxSpwanY && cordinate.y >= 0) {
+            tileData[cordinate.x, cordinate.y].isOccupide = status;
+        }
     }
     public void spawnSquareGrid() {
         Vector3 gridLeftBottom = gridCenter - new Vector3((maxSpwanX * gridSize) / 2, 0f, (maxSpwanY * gridSize) / 2);
@@ -62,7 +65,7 @@ public class GridSystem : MonoBehaviour {
                 GameObject tileInstance = Instantiate(gridPrefab, spawnPosition, Quaternion.identity);
                 tileInstance.name = tileSO.tileName + instanceNumber;
 
-                tileData[gridX, gridY] = new TileData(gridX, gridY, spawnPosition, true);
+                tileData[gridX, gridY] = new TileData(gridX, gridY, spawnPosition, true, false);
 
                 tileScript[gridX, gridY] = tileInstance.GetComponent<TileScript>();
 
