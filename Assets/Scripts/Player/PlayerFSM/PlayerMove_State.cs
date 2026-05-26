@@ -66,9 +66,10 @@ public class PlayerMove_State : ITurnState {
 
         UnitManager.Instance.MoveUnit(newPosition, activeUnit);
 
-        //Next action after movement
-        Debug.Log("Player Turn Over");
-        machine.ChangeState(new PlayerAttack_State(machine));
+        EventBus<DisableMoveButtonEvent>.Publish(new DisableMoveButtonEvent());
+
+        machine.ChangeState(null);
+        //machine.ChangeState(new PlayerMove_State(machine));
     }
 
     private void SpwnGhost() {

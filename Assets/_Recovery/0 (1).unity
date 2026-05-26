@@ -205,13 +205,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.53139853, y: 0, z: 0, w: 0.847122}
-  m_LocalPosition: {x: 0, y: 12.8, z: -5.7}
+  m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
+  m_LocalPosition: {x: 0, y: 10, z: -7.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 64.2, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 60, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -520,6 +520,7 @@ MonoBehaviour:
   uiDocument: {fileID: 1306128839}
   hpBarTempelete: {fileID: 9197481963319205126, guid: 06589d85f868b7e49a383c3815ae04a1, type: 3}
   tooltipTemplate: {fileID: 9197481963319205126, guid: 8ab7a6d684ab09d45bcd5bc3317efc5b, type: 3}
+  playerActionsTemplate: {fileID: 9197481963319205126, guid: 49af1444cb13b7d45bb42fd42256c132, type: 3}
 --- !u!114 &1306128839
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,0 +1,14 @@
+.grow-button {
+    transition-duration: 0.1s;
+    transition-property: scale;
+}
+
+.grow-button:hover {
+    scale: 1.05;
+}
+
+.glow-button {
+}
+
+.glow_button {
+}

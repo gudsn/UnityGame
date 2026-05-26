@@ -63,11 +63,13 @@ public class PlayerAttack_State:ITurnState{
             activeUnit.transform.LookAt(lookTarget);
 
             activeUnit.Attack(currentCordinate);
-                                       
-            machine.UnitEnd();
+
+            EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
+            machine.ChangeState(null);
         }
     }
     public void SkipTurn() {
-        machine.UnitEnd();
+        EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
+        machine.ChangeState(null);
     }
 }

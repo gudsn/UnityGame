@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,12 +8,15 @@ public class UIManager : MonoBehaviour {
     [SerializeField]private UIDocument uiDocument;
     [SerializeField]private VisualTreeAsset hpBarTempelete;
     [SerializeField]private VisualTreeAsset tooltipTemplate;
+    [SerializeField] private VisualTreeAsset playerActionsTemplate;
 
     private Camera mainCamera;
 
     private Dictionary<Unit, HealthBarController> registeredUnit;
 
     private TooltipController tooltipController;
+
+    private PlayerActionsController playerActionsController;
 
     public static UIManager Instance;
 
@@ -32,16 +36,30 @@ public class UIManager : MonoBehaviour {
         VisualElement canvas = uiDocument.rootVisualElement;
 
         tooltipController = new TooltipController(tooltipTemplate, canvas);
+
+        playerActionsController = new PlayerActionsController(playerActionsTemplate, canvas);
     }
 
     private void OnEnable() {
+        // Tooltip
         EventBus<ShowTooltipEvent>.Subscribe(OnShowTooltip);
         EventBus<HideTooltipEvent>.Subscribe(OnHideTooltip);
+        // PlayerActionsController
+        EventBus<DisableAttackButtonEvent>.Subscribe(DisableAttackButton);
+        EventBus<DisableMoveButtonEvent>.Subscribe(DisableMoveButton);
+        EventBus<ShowPlayerActionsEvent>.Subscribe(OnShowPlayerAction);
+        EventBus<HidePlayerActionsEvent>.Subscribe(OnHidePlayerAction);
     }
 
     private void OnDisable() {
+        // Tooltip
         EventBus<ShowTooltipEvent>.Unsubscribe(OnShowTooltip);
         EventBus<HideTooltipEvent>.Unsubscribe(OnHideTooltip);
+        // PlayerActionsController
+        EventBus<DisableAttackButtonEvent>.Unsubscribe(DisableAttackButton);
+        EventBus<DisableMoveButtonEvent>.Unsubscribe(DisableMoveButton);
+        EventBus<ShowPlayerActionsEvent>.Unsubscribe(OnShowPlayerAction);
+        EventBus<HidePlayerActionsEvent>.Unsubscribe(OnHidePlayerAction);
     }
     public void RegisterUnitUI(Unit unit) {
         if (unit.stats is IHealth health) {
@@ -68,12 +86,30 @@ public class UIManager : MonoBehaviour {
         }
     }
 
-    private void OnShowTooltip(ShowTooltipEvent evt) {
+    // Tooltip
+    private void OnShowTooltip(ShowTooltipEvent evt) { 
         tooltipController.Show(evt.targetUnit, evt.MousePosition);
     }
 
     private void OnHideTooltip(HideTooltipEvent evt) {
         tooltipController.Hide();
+    }
+
+    // PlayerActionsController
+    private void DisableAttackButton(DisableAttackButtonEvent evt) {
+        playerActionsController.DisableAttackButton();
+    }
+
+    private void DisableMoveButton(DisableMoveButtonEvent evt) {
+        playerActionsController.DisableMoveButton();
+    }
+    private void OnShowPlayerAction(ShowPlayerActionsEvent evt) {
+        playerActionsController.ResetButtons();
+        playerActionsController.Show();
+    }
+
+    private void OnHidePlayerAction(HidePlayerActionsEvent evt) {
+        playerActionsController.Hide();
     }
 
     public void LateUpdate() {
