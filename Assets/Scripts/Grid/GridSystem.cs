@@ -13,6 +13,7 @@ public class GridSystem : MonoBehaviour {
     // Grid Prefab for Spawning 
     [SerializeField] private GameObject gridPrefab;
     [SerializeField] private TileSO tileSO;
+    [SerializeField] private HighlightedTilePool tilePool;
 
     private TileData[,] tileData;
     private TileScript[,] tileScript;
@@ -51,7 +52,7 @@ public class GridSystem : MonoBehaviour {
    
     public void SetTileOccupide(Vector2Int cordinate, bool status) {
         if (cordinate.x < maxSpwanX && cordinate.x >= 0 && cordinate.y < maxSpwanY && cordinate.y >= 0) {
-            tileData[cordinate.x, cordinate.y].isOccupide = status;
+            tileData[cordinate.x, cordinate.y].isOccupied = status;
         }
     }
     public void spawnSquareGrid() {
@@ -90,27 +91,21 @@ public class GridSystem : MonoBehaviour {
         }
     }
 
-    public void SpawnManhattanDistanceGrid(Vector3 worldPosition, int range) {
+    public HashSet<TileData> SpawnManhattanDistanceGrid(Vector3 worldPosition, int range, HighlightType highlightType) {
         TileData startTile = WorldPositionToGridTile(worldPosition);
 
-        if (startTile == null) return;
+        if (startTile == null) return null;
 
         HashSet<TileData> visitedHash = GetManhattanGrid(startTile, range);
 
         foreach (TileData tile in visitedHash) {
-            TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
-            currentTileScript.SetHighlightedTile();
-            highlightedTileHash.Add(tile);
+            Vector3 highlightPosition = new Vector3(tile.worldPosition.x, 0.01f, tile.worldPosition.z);
+            tilePool.GetHighLightTile(highlightType, highlightPosition);
         }
+        return visitedHash;
     }
     public void DeleteManhattanDistanceGrid() {
-        if (highlightedTileHash.Count > 0) {
-            foreach (TileData tile in highlightedTileHash) {
-                TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
-                currentTileScript.SetHighlightedTile();
-            }
-            highlightedTileHash.Clear();
-        }
+        tilePool.ReturnHighLightTiles();
     }
 
     public HashSet<TileData> GetManhattanGrid(TileData startTile, int range) {
@@ -146,16 +141,17 @@ public class GridSystem : MonoBehaviour {
         return visitedHash;
     }
 
-    public void SpawnAttackRange(Vector3 currentPosition, int attackRange) {
+    public List<TileData> SpawnAttackRange(Vector3 currentPosition, int attackRange) {
         TileData currentTile = WorldPositionToGridTile(currentPosition);
 
         List<TileData> attakRangeTile = FindTileNeighbours(currentTile, attackRange);
 
         foreach (TileData tile in attakRangeTile) {
-            TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
-            currentTileScript.SetAttackRange();
-            highlightedTileHash.Add(tile);
+            Vector3 highlightPosition = new Vector3(tile.worldPosition.x, 0.01f, tile.worldPosition.z);
+            tilePool.GetHighLightTile(HighlightType.Attack, highlightPosition);
         }
+
+        return attakRangeTile;
     }
 
     public int GetManhattanDistance(Vector2Int startCordinate, Vector2Int endcordinate) {
@@ -176,13 +172,7 @@ public class GridSystem : MonoBehaviour {
         return GetManhattanDistance(startPos, endPos);
     }
     public void DeleteAttackRange() {
-        if (highlightedTileHash.Count > 0) {
-            foreach (TileData tile in highlightedTileHash) {
-                TileScript currentTileScript = tileScript[tile.gridX, tile.gridY];
-                currentTileScript.SetAttackRange();
-            }
-            highlightedTileHash.Clear();
-        }
+        tilePool.ReturnHighLightTiles(HighlightType.Attack);
     }
 
     // Grid Neighbour direction Array

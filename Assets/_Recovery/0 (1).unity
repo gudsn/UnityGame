@@ -576,6 +576,7 @@ GameObject:
   - component: {fileID: 2064665779}
   - component: {fileID: 2064665784}
   - component: {fileID: 2064665785}
+  - component: {fileID: 2064665786}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -662,6 +663,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridSystem
   gridPrefab: {fileID: 6571263457396014950, guid: 20ec80e93175bec468a391ffea0268d5, type: 3}
   tileSO: {fileID: 11400000, guid: 82c5b5055d34cb24fabe168ef64fa9ab, type: 2}
+  tilePool: {fileID: 2064665786}
 --- !u!114 &2064665783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -700,6 +702,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c834f8a814b331247afbf92a8a90102e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
+--- !u!114 &2064665786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064665775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3209edac04439a84cb35cb092e32dada, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightedTilePool
+  configs:
+  - type: 0
+    prefab: {fileID: 6571263457396014950, guid: 7d505e3c233a62c439c0a15099223c94, type: 3}
+    count: 30
+  - type: 1
+    prefab: {fileID: 6571263457396014950, guid: b4d132456e1acfb4bb10038eac68a218, type: 3}
+    count: 30
+  - type: 2
+    prefab: {fileID: 6571263457396014950, guid: dfa61041c84f79b478a61b151a50efeb, type: 3}
+    count: 5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

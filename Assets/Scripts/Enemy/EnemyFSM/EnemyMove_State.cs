@@ -99,7 +99,7 @@ public class EnemyMove_State : ITurnState {
                 break;
             }
         }
-        while (targetTile == null || !targetTile.isWalkable || targetTile.isOccupide);
+        while (targetTile == null || !targetTile.isWalkable || targetTile.isOccupied);
 
         return targetTile;
     }

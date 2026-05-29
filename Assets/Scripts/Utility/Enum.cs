@@ -6,3 +6,9 @@ public enum Faction{
     Neutral,    // 중립 (마을 주민 등)
     Obstacle    // 파괴 가능한 장애물 (나무통, 바위 등)
 }
+
+public enum HighlightType {
+    Move,       // 이동 가능 지역
+    Attack,     // 공격 가능 지역
+    Hover       // 마우스 오버
+}

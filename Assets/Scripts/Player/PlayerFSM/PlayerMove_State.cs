@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMove_State : ITurnState {
@@ -8,6 +9,8 @@ public class PlayerMove_State : ITurnState {
     private Vector3 ghostPosition;
 
     private int moveRange;
+
+    private HashSet<TileData> validMoveTiles;
 
     public PlayerMove_State(PlayerFSM machine) {
         this.machine = machine;
@@ -21,7 +24,7 @@ public class PlayerMove_State : ITurnState {
         PlayerInput.Instance.OnEnterTriggered += HandleConfirmMove;
 
         SpwnGhost();
-        GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, moveRange);
+        validMoveTiles =  GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, moveRange, HighlightType.Move);
     }
 
     public void Execute() {
@@ -45,10 +48,10 @@ public class PlayerMove_State : ITurnState {
         if (ghostTile == null) {
             return;
         }
-        if (!ghostTile.isWalkable || ghostTile.isOccupide) {
+        if (!ghostTile.isWalkable || ghostTile.isOccupied) {
             return;
         }
-        if (!GridSystem.Instance.checkHighlightedTile(ghostTile)) {
+        if (!validMoveTiles.Contains(ghostTile)) {
             return;
         }
 
