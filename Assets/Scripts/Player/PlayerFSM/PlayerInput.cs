@@ -4,11 +4,17 @@ using UnityEngine.InputSystem;
 using System;
 
 public class PlayerInput : MonoBehaviour {
+    [SerializeField] HighlightedTilePool tilePool;
+
     private PlayerControl control;
 
     public event Action<Vector2> OnMoveInputTriggered;
     public event Action OnEnterTriggered;
-    public event Action<Vector2> OnRightMouseClicked;
+    public event Action<Vector2> OnLeftMouseClicked;
+
+    private TileData currentHoverTile = null;
+
+    private Vector2 lastMousePos;
 
     public static PlayerInput Instance { get; private set;}
 
@@ -29,7 +35,7 @@ public class PlayerInput : MonoBehaviour {
         
         control.Player.LeftClick.performed += ctx => {
             Vector2 mousePose = Mouse.current.position.ReadValue();
-            OnRightMouseClicked?.Invoke(mousePose);
+            OnLeftMouseClicked?.Invoke(mousePose);
         };
 
         control.Player.RightClick.performed += OnRightClickPerformed;
@@ -38,6 +44,12 @@ public class PlayerInput : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+        Vector2 currentMousePosition = Mouse.current.position.ReadValue();
+
+        if (currentMousePosition != lastMousePos) {
+            lastMousePos = currentMousePosition;
+            HanddleMouseHover(lastMousePos);
+        }
     }
 
     public void OnEnable() {
@@ -63,6 +75,39 @@ public class PlayerInput : MonoBehaviour {
                     MousePosition = mousePosition
                 });
             }
+        }
+    }
+
+    private void HanddleMouseHover(Vector2 mousePos) {
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+
+        int layerMask = LayerMask.GetMask("Tile");
+
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask)) {
+
+            // TileData is not MonoBehaviour
+            TileData newHoverTile = GridSystem.Instance.WorldPositionToGridTile(hit.point);
+
+            // GridSystem.WorldPositionToGridTile has an edge case
+            if (newHoverTile == null) return;
+
+            // No need to run more if mouse is in currentHoverTile area
+            if (currentHoverTile == newHoverTile) return;
+
+            if (currentHoverTile != null) {
+                tilePool.ReturnHighLightTiles(HighlightType.Hover);
+            }
+
+            currentHoverTile = newHoverTile;
+            Vector3 hoverTilePositon = new Vector3(currentHoverTile.worldPosition.x, 0.01f, currentHoverTile.worldPosition.z);
+
+            tilePool.GetHighLightTile(HighlightType.Hover, hoverTilePositon);
+        }
+        else {
+            if (currentHoverTile == null) return;
+
+            tilePool.ReturnHighLightTiles(HighlightType.Hover);
+            currentHoverTile = null;
         }
     }
 

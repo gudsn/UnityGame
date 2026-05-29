@@ -15,7 +15,7 @@ public class PlayerAttack_State:ITurnState{
     public void Enter() {
         Debug.Log("Attack phase.");
         validAttackTile = GridSystem.Instance.SpawnAttackRange(activeUnit.transform.position, attackRange);
-        PlayerInput.Instance.OnRightMouseClicked += AttackTarget;
+        PlayerInput.Instance.OnLeftMouseClicked += AttackTarget;
         PlayerInput.Instance.OnEnterTriggered += SkipTurn;
     }
 
@@ -23,7 +23,7 @@ public class PlayerAttack_State:ITurnState{
 
     public void Exit() {
         GridSystem.Instance.DeleteAttackRange();
-        PlayerInput.Instance.OnRightMouseClicked -= AttackTarget;
+        PlayerInput.Instance.OnLeftMouseClicked -= AttackTarget;
         PlayerInput.Instance.OnEnterTriggered -= SkipTurn;
     }
 

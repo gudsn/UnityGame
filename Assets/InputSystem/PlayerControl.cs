@@ -127,6 +127,15 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Point"",
+                    ""type"": ""Value"",
+                    ""id"": ""02e7dec0-ad31-400e-a107-0a49f19d70a0"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -217,6 +226,17 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
                     ""action"": ""RightClick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1bf7a3f4-885f-45ca-93e7-f9ebbbd3bbc5"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Point"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -229,6 +249,7 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
         m_Player_Enter = m_Player.FindAction("Enter", throwIfNotFound: true);
         m_Player_LeftClick = m_Player.FindAction("LeftClick", throwIfNotFound: true);
         m_Player_RightClick = m_Player.FindAction("RightClick", throwIfNotFound: true);
+        m_Player_Point = m_Player.FindAction("Point", throwIfNotFound: true);
     }
 
     ~@PlayerControl()
@@ -313,6 +334,7 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Enter;
     private readonly InputAction m_Player_LeftClick;
     private readonly InputAction m_Player_RightClick;
+    private readonly InputAction m_Player_Point;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -340,6 +362,10 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/RightClick".
         /// </summary>
         public InputAction @RightClick => m_Wrapper.m_Player_RightClick;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Point".
+        /// </summary>
+        public InputAction @Point => m_Wrapper.m_Player_Point;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -378,6 +404,9 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
             @RightClick.started += instance.OnRightClick;
             @RightClick.performed += instance.OnRightClick;
             @RightClick.canceled += instance.OnRightClick;
+            @Point.started += instance.OnPoint;
+            @Point.performed += instance.OnPoint;
+            @Point.canceled += instance.OnPoint;
         }
 
         /// <summary>
@@ -401,6 +430,9 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
             @RightClick.started -= instance.OnRightClick;
             @RightClick.performed -= instance.OnRightClick;
             @RightClick.canceled -= instance.OnRightClick;
+            @Point.started -= instance.OnPoint;
+            @Point.performed -= instance.OnPoint;
+            @Point.canceled -= instance.OnPoint;
         }
 
         /// <summary>
@@ -469,5 +501,12 @@ public partial class @PlayerControl: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRightClick(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Point" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPoint(InputAction.CallbackContext context);
     }
 }

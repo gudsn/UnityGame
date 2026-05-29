@@ -80,15 +80,18 @@ public class GridSystem : MonoBehaviour {
     }
 
     public TileData WorldPositionToGridTile(Vector3 worldPosition) {
-        int gridX = Mathf.FloorToInt((worldPosition.x - (gridCenter.x - (maxSpwanX * gridSize) / 2)) / gridSize);
-        int gridY = Mathf.FloorToInt((worldPosition.z - (gridCenter.z - (maxSpwanY * gridSize) / 2)) / gridSize);
+        Vector3 leftBottom = gridCenter - new Vector3((maxSpwanX * gridSize) / 2, 0f, (maxSpwanY * gridSize) / 2);
+        Vector3 currentGirdPosition = worldPosition - leftBottom;
 
-        if (gridX < 0 || gridX >= maxSpwanX || gridY < 0 || gridY >= maxSpwanY) {
-            return null; // Return null if the world position is outside the grid bounds
-        }
-        else {
+        int gridX = Mathf.RoundToInt(currentGirdPosition.x / (float)gridSize);
+        int gridY = Mathf.RoundToInt(currentGirdPosition.z / (float)gridSize);
+
+        if (gridX >= 0 && gridX <= maxSpwanY * gridSize && 
+            gridY >= 0 && gridY <= maxSpwanY * gridSize) {
+
             return tileData[gridX, gridY];
         }
+        return null;
     }
 
     public HashSet<TileData> SpawnManhattanDistanceGrid(Vector3 worldPosition, int range, HighlightType highlightType) {
