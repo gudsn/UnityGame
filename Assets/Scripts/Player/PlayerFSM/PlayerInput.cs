@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 using System;
 
 public class PlayerInput : MonoBehaviour {
-    [SerializeField] HighlightedTilePool tilePool;
+    [SerializeField] HighlightTilePool tilePool;
 
     private PlayerControl control;
 
@@ -15,6 +15,11 @@ public class PlayerInput : MonoBehaviour {
     private TileData currentHoverTile = null;
 
     private Vector2 lastMousePos;
+
+    private Unit currentHoverUnit = null;
+    private float tooltipTimer = 0f;
+    private float tooltipDelay = 0.5f; 
+    private bool isTooltipActive = false;
 
     public static PlayerInput Instance { get; private set;}
 
@@ -46,6 +51,19 @@ public class PlayerInput : MonoBehaviour {
     void Update() {
         Vector2 currentMousePosition = Mouse.current.position.ReadValue();
 
+        if (currentHoverUnit != null && !isTooltipActive) {
+            tooltipTimer += Time.deltaTime;
+            if (tooltipTimer >= tooltipDelay) {
+
+                isTooltipActive = true;
+
+                EventBus<ShowTooltipEvent>.Publish(new ShowTooltipEvent {
+                    targetUnit = currentHoverUnit,
+                    MousePosition = currentMousePosition
+                });
+            }
+        }
+
         if (currentMousePosition != lastMousePos) {
             lastMousePos = currentMousePosition;
             HanddleMouseHover(lastMousePos);
@@ -58,60 +76,69 @@ public class PlayerInput : MonoBehaviour {
     public void OnDisable() {
         control.Player.Disable();
     }
-
+    
     private void OnRightClickPerformed(InputAction.CallbackContext context) {
-        Vector2 mousePosition = Mouse.current.position.ReadValue();
 
-        Ray ray = Camera.main.ScreenPointToRay(mousePosition);
-
-        int layerMask = LayerMask.GetMask("Unit");
-
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask)) {
-            Unit checkUnit = hit.collider.GetComponentInParent<Unit>();
-
-            if (checkUnit != null) {
-                EventBus<ShowTooltipEvent>.Publish(new ShowTooltipEvent {
-                    targetUnit = checkUnit,
-                    MousePosition = mousePosition
-                });
-            }
-        }
     }
+
+    public void OnRightClickCanceled(InputAction.CallbackContext context) {
+
+    }
+
 
     private void HanddleMouseHover(Vector2 mousePos) {
         Ray ray = Camera.main.ScreenPointToRay(mousePos);
 
-        int layerMask = LayerMask.GetMask("Tile");
+        int layerMask = LayerMask.GetMask("Tile", "Unit");
+        Unit newHoverUnit = null;
+        TileData newHoverTile = null;
 
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask)) {
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Unit")) {
+                newHoverUnit = hit.collider.GetComponentInParent<Unit>();
 
-            // TileData is not MonoBehaviour
-            TileData newHoverTile = GridSystem.Instance.WorldPositionToGridTile(hit.point);
-
-            // GridSystem.WorldPositionToGridTile has an edge case
-            if (newHoverTile == null) return;
-
-            // No need to run more if mouse is in currentHoverTile area
-            if (currentHoverTile == newHoverTile) return;
-
-            if (currentHoverTile != null) {
-                tilePool.ReturnHighLightTiles(HighlightType.Hover);
+                if (newHoverUnit != null) {
+                    newHoverTile = GridSystem.Instance.GetTileData(newHoverUnit.currentPosition);
+                }
             }
-
-            currentHoverTile = newHoverTile;
-            Vector3 hoverTilePositon = new Vector3(currentHoverTile.worldPosition.x, 0.01f, currentHoverTile.worldPosition.z);
-
-            tilePool.GetHighLightTile(HighlightType.Hover, hoverTilePositon);
+            else {
+                // TileData is not MonoBehaviour
+                newHoverTile = GridSystem.Instance.WorldPositionToGridTile(hit.point);
+            }
         }
-        else {
-            if (currentHoverTile == null) return;
 
-            tilePool.ReturnHighLightTiles(HighlightType.Hover);
-            currentHoverTile = null;
-        }
+        UpdateTileHighlight(newHoverTile);
+        UpdateUnitTooltipState(newHoverUnit);
     }
 
-    public void OnRightClickCanceled(InputAction.CallbackContext context) {
-        EventBus<HideTooltipEvent>.Publish(new HideTooltipEvent());
+    private void ResetTooltip() {
+        if (tooltipTimer >= tooltipDelay || isTooltipActive) {
+            EventBus<HideTooltipEvent>.Publish(new HideTooltipEvent());
+        }
+        tooltipTimer = 0;
+        isTooltipActive = false;
+    }
+    private void UpdateTileHighlight(TileData newHoverTile) {
+        if (currentHoverTile == newHoverTile) return;
+
+        if (currentHoverTile!= null) {
+            tilePool.ReturnHighLightTiles(HighlightType.Hover);
+        }
+
+        currentHoverTile = newHoverTile;
+
+        if (newHoverTile != null) {
+            Vector3 hoverTilePos = currentHoverTile.worldPosition + new Vector3(0, 0.01f, 0);
+            tilePool.GetHighLightTile(HighlightType.Hover ,hoverTilePos);
+        }
+    }
+    private void UpdateUnitTooltipState(Unit newHoverUnit) {
+        if (currentHoverUnit == newHoverUnit) return;
+
+        if (currentHoverUnit != null) {
+            ResetTooltip();
+        }
+
+        currentHoverUnit = newHoverUnit;
     }
 }

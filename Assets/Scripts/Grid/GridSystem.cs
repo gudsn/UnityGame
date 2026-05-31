@@ -13,7 +13,7 @@ public class GridSystem : MonoBehaviour {
     // Grid Prefab for Spawning 
     [SerializeField] private GameObject gridPrefab;
     [SerializeField] private TileSO tileSO;
-    [SerializeField] private HighlightedTilePool tilePool;
+    [SerializeField] private HighlightTilePool tilePool;
 
     private TileData[,] tileData;
     private TileScript[,] tileScript;
