@@ -10,5 +10,7 @@ public enum Faction{
 public enum HighlightType {
     Move,       // 이동 가능 지역
     Attack,     // 공격 가능 지역
-    Hover       // 마우스 오버
+    Hover,       // 마우스 오버
+    EnemyPath,   // 적 이동 예정 경로 (화살표 하이라이트)
+    EnemyAttack  // 적 공격 예정 범위 (주황색)
 }

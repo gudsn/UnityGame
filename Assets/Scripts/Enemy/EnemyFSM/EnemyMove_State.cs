@@ -44,7 +44,7 @@ public class EnemyMove_State : ITurnState {
             targetTile = GetRandTile(moveRange);
         }
 
-        routeTiles = GridSystem.Instance.A_Algorithm(startTile, targetTile);
+        routeTiles = GridSystem.Instance.AStarAlgorithm(startTile, targetTile);
 
         // Control move range
         if (routeTiles.Count > moveRange) {

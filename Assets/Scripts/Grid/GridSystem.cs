@@ -1,8 +1,4 @@
-using JetBrains.Annotations;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 public class GridSystem : MonoBehaviour {
@@ -55,7 +51,7 @@ public class GridSystem : MonoBehaviour {
             tileData[cordinate.x, cordinate.y].isOccupied = status;
         }
     }
-    public void spawnSquareGrid() {
+    public void SpawnSquareGrid() {
         Vector3 gridLeftBottom = gridCenter - new Vector3((maxSpwanX * gridSize) / 2, 0f, (maxSpwanY * gridSize) / 2);
 
         for (int gridX = 0; gridX < maxSpwanX; gridX++) {
@@ -81,14 +77,12 @@ public class GridSystem : MonoBehaviour {
 
     public TileData WorldPositionToGridTile(Vector3 worldPosition) {
         Vector3 leftBottom = gridCenter - new Vector3((maxSpwanX * gridSize) / 2, 0f, (maxSpwanY * gridSize) / 2);
-        Vector3 currentGirdPosition = worldPosition - leftBottom;
+        Vector3 currentGridPosition = worldPosition - leftBottom;
 
-        int gridX = Mathf.RoundToInt(currentGirdPosition.x / (float)gridSize);
-        int gridY = Mathf.RoundToInt(currentGirdPosition.z / (float)gridSize);
+        int gridX = Mathf.RoundToInt(currentGridPosition.x / (float)gridSize);
+        int gridY = Mathf.RoundToInt(currentGridPosition.z / (float)gridSize);
 
-        if (gridX >= 0 && gridX <= maxSpwanY * gridSize && 
-            gridY >= 0 && gridY <= maxSpwanY * gridSize) {
-
+        if (gridX >= 0 && gridX < maxSpwanX && gridY >= 0 && gridY < maxSpwanY) {
             return tileData[gridX, gridY];
         }
         return null;
@@ -97,7 +91,7 @@ public class GridSystem : MonoBehaviour {
     public HashSet<TileData> SpawnManhattanDistanceGrid(Vector3 worldPosition, int range, HighlightType highlightType) {
         TileData startTile = WorldPositionToGridTile(worldPosition);
 
-        if (startTile == null) return null;
+        if (startTile == null) return new HashSet<TileData>();
 
         HashSet<TileData> visitedHash = GetManhattanGrid(startTile, range);
 
@@ -105,7 +99,7 @@ public class GridSystem : MonoBehaviour {
             Vector3 highlightPosition = new Vector3(tile.worldPosition.x, 0.01f, tile.worldPosition.z);
             tilePool.GetHighLightTile(highlightType, highlightPosition);
         }
-        return visitedHash;
+        return visitedHash ?? new HashSet<TileData>();
     }
     public void DeleteManhattanDistanceGrid() {
         tilePool.ReturnHighLightTiles();
@@ -146,6 +140,7 @@ public class GridSystem : MonoBehaviour {
 
     public List<TileData> SpawnAttackRange(Vector3 currentPosition, int attackRange) {
         TileData currentTile = WorldPositionToGridTile(currentPosition);
+        if (currentTile == null) return new List<TileData>();
 
         List<TileData> attakRangeTile = FindTileNeighbours(currentTile, attackRange);
 
@@ -206,7 +201,7 @@ public class GridSystem : MonoBehaviour {
         }
         return neighbourTile;
     }
-    public bool checkHighlightedTile(TileData checkTile) {
+    public bool CheckHighlightedTile(TileData checkTile) {
         if (checkTile == null) return false;
 
         return highlightedTileHash.Contains(checkTile);
@@ -237,7 +232,10 @@ public class GridSystem : MonoBehaviour {
     // HashSet for closedList
     HashSet<TileData> closedHash = new HashSet<TileData>();
 
-    public List<TileData> A_Algorithm(TileData start, TileData end) {
+    public List<TileData> AStarAlgorithm(TileData start, TileData end) {
+        if (start == null || end == null) return new List<TileData>();
+        if (start == end) return new List<TileData>();  
+
         openQueue.Clear();
         openSet.Clear();
         closedHash.Clear();
@@ -250,8 +248,10 @@ public class GridSystem : MonoBehaviour {
 
         List<TileData> neighbourList = new List<TileData>();
         
-        while (openSet.Count > 0) {
+        // 루프 조건을 openQueue 기준으로 변경
+        while (openQueue.Count > 0) {
             currentNode = openQueue.Dequeue();
+            if (currentNode == null) break;
 
             openSet.Remove(currentNode.tile);
             closedHash.Add(currentNode.tile);
@@ -289,7 +289,7 @@ public class GridSystem : MonoBehaviour {
 
         // List for route tiles from start tile to end tile
         List<TileData> visitedTile = new List<TileData>();
-        if (currentNode.tile == end && currentNode != null) {
+        if (currentNode != null && currentNode.tile == end) {
             while (currentNode != null && currentNode.tile != start) {
                 visitedTile.Add(currentNode.tile);
                 currentNode = currentNode.parent;

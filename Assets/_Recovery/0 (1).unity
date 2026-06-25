@@ -623,7 +623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b71cdd5aaa25a94fb4665c768dd7904, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
-  tilePool: {fileID: 0}
+  tilePool: {fileID: 2064665786}
 --- !u!114 &2064665780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -664,7 +664,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridSystem
   gridPrefab: {fileID: 6571263457396014950, guid: 20ec80e93175bec468a391ffea0268d5, type: 3}
   tileSO: {fileID: 11400000, guid: 82c5b5055d34cb24fabe168ef64fa9ab, type: 2}
-  tilePool: {fileID: 0}
+  tilePool: {fileID: 2064665786}
 --- !u!114 &2064665783
 MonoBehaviour:
   m_ObjectHideFlags: 0

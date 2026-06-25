@@ -5,7 +5,7 @@ public class BattleManager : MonoBehaviour{
 
     private Dictionary<Vector2Int, Unit> currentUnitData;
     void Start(){
-        currentUnitData = UnitManager.Instance.registeredUnit;
+        currentUnitData = UnitManager.Instance.RegisteredUnit;
 
         foreach (KeyValuePair<Vector2Int,Unit> it in currentUnitData) {
             it.Value.OnAttack += TryAttack;

@@ -131,8 +131,9 @@ public class PriorityQueue<T> {
         return heap[1].priority;
     }
 
-    public int Count() {
-        return tailIndex;
+    // 읽기 전용 Count 프로퍼티 추가 (.NET 관례)
+    public int Count {
+        get { return tailIndex; }
     }
 
     private void ShiftUp(int index) {

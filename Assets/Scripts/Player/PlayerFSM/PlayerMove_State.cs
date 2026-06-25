@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerMove_State : ITurnState {
+public class PlayerMoveState : ITurnState {
     private PlayerFSM machine;
     private Unit activeUnit;
 
@@ -12,7 +12,7 @@ public class PlayerMove_State : ITurnState {
 
     private HashSet<TileData> validMoveTiles;
 
-    public PlayerMove_State(PlayerFSM machine) {
+    public PlayerMoveState(PlayerFSM machine) {
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
     }
@@ -23,7 +23,7 @@ public class PlayerMove_State : ITurnState {
         PlayerInput.Instance.OnMoveInputTriggered += HandleIntendedMove;
         PlayerInput.Instance.OnEnterTriggered += HandleConfirmMove;
 
-        SpwnGhost();
+        SpawnGhost();
         validMoveTiles =  GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, moveRange, HighlightType.Move);
     }
 
@@ -72,10 +72,10 @@ public class PlayerMove_State : ITurnState {
         EventBus<DisableMoveButtonEvent>.Publish(new DisableMoveButtonEvent());
 
         machine.ChangeState(null);
-        //machine.ChangeState(new PlayerMove_State(machine));
+        //machine.ChangeState(new PlayerMoveState(machine));
     }
 
-    private void SpwnGhost() {
+    private void SpawnGhost() {
         ghostInstance = Object.Instantiate(activeUnit.ghostPrefab, activeUnit.transform.position, Quaternion.identity);
 
         int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");

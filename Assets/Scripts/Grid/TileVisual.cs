@@ -7,7 +7,7 @@ public class TileVisual : MonoBehaviour {
     [SerializeField] private Material highlightMaterial;
     [SerializeField] private Material attackRangeMaterial;
     private Renderer tileRenderer;
-    public bool isHighlighted { get; private set; } = false; 
+    public bool IsHighlighted { get; private set; } = false; 
     
     void Awake() {
         tileRenderer = GetComponent<Renderer>();
@@ -21,24 +21,24 @@ public class TileVisual : MonoBehaviour {
     }
 
     public void SetHighlighted() {
-        if (isHighlighted) {
+        if (IsHighlighted) {
             tileRenderer.material = originalMaterial;
-            isHighlighted = false;
+            IsHighlighted = false;
         }
         else {
             tileRenderer.material = highlightMaterial;
-            isHighlighted = true;
+            IsHighlighted = true;
         }
     }
 
     public void SetAttackRange() {
-        if (isHighlighted) {
+        if (IsHighlighted) {
             tileRenderer.material = originalMaterial;
-            isHighlighted = false;
+            IsHighlighted = false;
         }
         else {
             tileRenderer.material = attackRangeMaterial;
-            isHighlighted = true;
+            IsHighlighted = true;
         }
     }
 

@@ -26,12 +26,12 @@ public class PlayerFSM : MonoBehaviour
 
     private void OnUIActionAttack(UIActionAttackEvent evt) {
         if (activeUnit != null) {
-            ChangeState(new PlayerAttack_State(this));
+            ChangeState(new PlayerAttackState(this));
         }
     }
     private void OnUIActionMove(UIActionMoveEvent evt) {
         if (activeUnit != null) {
-            ChangeState(new PlayerMove_State(this));
+            ChangeState(new PlayerMoveState(this));
         }
     }
     private void OnUIActionNext(UIActionNextEvent evt) {

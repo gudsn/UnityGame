@@ -9,7 +9,7 @@ public class UnitManager : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameObject enemyPrefab;
 
-    public Dictionary<Vector2Int, Unit> registeredUnit;
+    public Dictionary<Vector2Int, Unit> RegisteredUnit;
 
     public Action<Unit> OnSpawnUnit;
     public Action<Dictionary<Vector2Int, Unit>> OnMoveUnit;
@@ -22,14 +22,14 @@ public class UnitManager : MonoBehaviour
         }
         Instance = this;
 
-        registeredUnit = new Dictionary<Vector2Int, Unit>();
+        RegisteredUnit = new Dictionary<Vector2Int, Unit>();
 
     }
     void Start(){
     }
 
     public void SetWorld() {
-        GridSystem.Instance.spawnSquareGrid();
+        GridSystem.Instance.SpawnSquareGrid();
 
         Vector3 playerSpawnPosition = Vector3.zero;
         Vector3 enemySpawnPosition = new Vector3(2, 0, 0);
@@ -60,7 +60,7 @@ public class UnitManager : MonoBehaviour
     public void SpawnUnit(Unit unit) {
         Vector2Int currentUnitPosition = unit.currentPosition;
 
-        registeredUnit.TryAdd(currentUnitPosition, unit);
+        RegisteredUnit.TryAdd(currentUnitPosition, unit);
 
         unit.OnUnitDie += KillUnit;
 
@@ -70,18 +70,18 @@ public class UnitManager : MonoBehaviour
     public void MoveUnit (Vector2Int newPosition, Unit unit) {
         Vector2Int oldPosition = unit.currentPosition;
 
-        if (registeredUnit.ContainsKey(oldPosition) && registeredUnit[oldPosition] == unit) {
-            registeredUnit.Remove(oldPosition); 
+        if (RegisteredUnit.ContainsKey(oldPosition) && RegisteredUnit[oldPosition] == unit) {
+            RegisteredUnit.Remove(oldPosition); 
             GridSystem.Instance.SetTileOccupide(oldPosition, false);
         }
 
-        registeredUnit.TryAdd(newPosition, unit);
+        RegisteredUnit.TryAdd(newPosition, unit);
 
         unit.SetPosition(newPosition);
 
         GridSystem.Instance.SetTileOccupide(newPosition, true);
 
-        OnMoveUnit?.Invoke(registeredUnit);
+        OnMoveUnit?.Invoke(RegisteredUnit);
     }
 
     public void KillUnit(Unit unit) {
@@ -89,8 +89,8 @@ public class UnitManager : MonoBehaviour
 
         GridSystem.Instance.SetTileOccupide(currentPosition, false);
 
-        if (registeredUnit.ContainsKey(currentPosition) && registeredUnit[currentPosition] == unit) {
-            registeredUnit.Remove(unit.currentPosition);
+        if (RegisteredUnit.ContainsKey(currentPosition) && RegisteredUnit[currentPosition] == unit) {
+            RegisteredUnit.Remove(unit.currentPosition);
         }
 
         unit.OnUnitDie -= KillUnit;

@@ -2,13 +2,13 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class PlayerAttack_State:ITurnState{
+public class PlayerAttackState : ITurnState{
     private PlayerFSM machine;
     private Unit activeUnit;
     private int attackRange = 2;
 
     private List<TileData> validAttackTile;
-    public PlayerAttack_State(PlayerFSM machine) {
+    public PlayerAttackState(PlayerFSM machine) {
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
     }
@@ -52,7 +52,7 @@ public class PlayerAttack_State:ITurnState{
                 Debug.Log("Out of attack range!");
                 return;
             }
-            if (!UnitManager.Instance.registeredUnit.TryGetValue(currentCordinate, out Unit targetUnit)) {
+            if (!UnitManager.Instance.RegisteredUnit.TryGetValue(currentCordinate, out Unit targetUnit)) {
                 Debug.Log("Please click the unit!");
                 return;
             }

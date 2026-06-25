@@ -26,6 +26,6 @@ public class TileScript : MonoBehaviour {
     }
 
     public bool GetIsHighlighted() {
-        return visual.isHighlighted;
+        return visual.IsHighlighted;
     }
 }

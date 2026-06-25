@@ -53,7 +53,7 @@ public class FSMManager : MonoBehaviour
     }
 
     public void NextState() {
-        if (unitQueue.Count() == 0) {
+        if (unitQueue.Count == 0) {
             Debug.Log("No Unit for play");
             return;
         }
@@ -85,8 +85,4 @@ public class FSMManager : MonoBehaviour
         }
         NextState();
     }
-
-
-
-
 }

@@ -27,8 +27,8 @@ public class EnemyBrain : MonoBehaviour {
 
         bool isEnemyInSight = false;
 
-        if (currentUnitChase != null) {
-            foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.registeredUnit) {
+        if (currentUnitChase != null && currentUnitChase.Count > 0) {
+            foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.RegisteredUnit) {
                 Unit checkUnit = it.Value;
 
                 if (currentUnit.unitFaction == checkUnit.unitFaction || checkUnit.GetHealth() <= 0) continue;
@@ -75,7 +75,7 @@ public class EnemyBrain : MonoBehaviour {
         AIDecision bestDecision = null;
         float highestScore = -1f;
 
-        foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.registeredUnit) {
+        foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.RegisteredUnit) {
             Unit targetUnit = it.Value;
 
             if (currentUnit.unitFaction == targetUnit.unitFaction || targetUnit.GetHealth() <= 0) {
@@ -129,7 +129,7 @@ public class EnemyBrain : MonoBehaviour {
         TileData startTile = GridSystem.Instance.GetTileData(currentUnit.currentPosition);
         TileData endTile = GridSystem.Instance.GetTileData(targetUnit.currentPosition);
 
-        List<TileData> A_PathTile = GridSystem.Instance.A_Algorithm(startTile, endTile);
+        List<TileData> A_PathTile = GridSystem.Instance.AStarAlgorithm(startTile, endTile);
 
         // 경로가 아예 없으면 제자리 대기 반환
         if (A_PathTile == null || A_PathTile.Count == 0) {
@@ -157,7 +157,7 @@ public class EnemyBrain : MonoBehaviour {
         TileData destinationTile = (A_PathTile.Count > 0) ? A_PathTile[A_PathTile.Count - 1] : startTile;
         Unit finalTarget = null;
 
-        // 역순 탐색을 통해 '공격 가능 타일'에 도착하는지 확인하고 targetUnit 할당
+        // 역순 탐색을 통해 '공격 가능 타일'에 도달하는지 확인하고 targetUnit 할당
         for (int i = A_PathTile.Count - 1; i >= 0; i--) {
             if (attackRangeTiles.Contains(A_PathTile[i])) {
                 destinationTile = A_PathTile[i];
@@ -186,7 +186,7 @@ public class EnemyBrain : MonoBehaviour {
         AIActionType aiAction = AIActionType.Wait;
         TileData destinationTile = null;
 
-        foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.registeredUnit) {
+        foreach (KeyValuePair<Vector2Int, Unit> it in UnitManager.Instance.RegisteredUnit) {
             Unit targetUnit = it.Value;
             float currentScore = 0;
 
@@ -213,7 +213,7 @@ public class EnemyBrain : MonoBehaviour {
             float targetUnitHealth = targetUnit.GetHealth();
 
             float currentUnitHealthRatio = currentUnitHealth / currentUnit.GetMaxHealth();
-            float targetUnitHealthRatio = targetUnitHealth / targetUnit.GetMaxHealth();
+            float targetUnitHealthRatio = targetUnitHealth / currentUnit.GetMaxHealth();
 
             if (currentUnitHealthRatio < 0.3) {
                 currentScore += (float)(0.3 - currentUnitHealthRatio) * 200;
