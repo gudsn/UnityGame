@@ -126,7 +126,7 @@ public class GridSystem : MonoBehaviour {
                 List<TileData> neighbourList = FindTileNeighbours(currentTile, 1);
 
                 foreach (TileData n in neighbourList) {
-                    if (visitedHash.Contains(n) || !n.isWalkable) {
+                    if (visitedHash.Contains(n) || !n.isWalkable || n.isOccupied) {
                         continue;
                     }
 
@@ -263,6 +263,9 @@ public class GridSystem : MonoBehaviour {
 
             foreach (TileData tile in neighbourList) {
                 if (!tile.isWalkable && tile != end) {
+                    continue;
+                }
+                if (tile.isOccupied && tile != end) {
                     continue;
                 }
                 if (closedHash.Contains(tile)) {
