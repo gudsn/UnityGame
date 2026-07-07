@@ -16,38 +16,52 @@ public class PlayerMoveState : ITurnState {
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
     }
-    public void Enter(){
+    public void Enter() {
         moveRange = activeUnit.GetMoveRange();
 
         Debug.Log("Player Turn");
-        PlayerInput.Instance.OnMoveInputTriggered += HandleIntendedMove;
         PlayerInput.Instance.OnEnterTriggered += HandleConfirmMove;
 
+        PlayerInput.Instance.OnLeftMouseClicked += HandleIntendedMove;
+
         SpawnGhost();
-        validMoveTiles =  GridSystem.Instance.SpawnManhattanDistanceGrid(activeUnit.transform.position, moveRange, HighlightType.Move);
+
+        // [변경] 가상 위치(virtualPosition) 세계 좌표를 기준으로 이동 그리드 생성
+        Vector3 virtualWorldPos = GridSystem.Instance.GetTileData(activeUnit.virtualPosition).worldPosition;
+        validMoveTiles = GridSystem.Instance.SpawnManhattanDistanceGrid(virtualWorldPos, moveRange, HighlightType.Move);
     }
 
     public void Execute() {
-    
+
     }
 
     public void Exit() {
-        PlayerInput.Instance.OnMoveInputTriggered -= HandleIntendedMove;
         PlayerInput.Instance.OnEnterTriggered -= HandleConfirmMove;
 
+        PlayerInput.Instance.OnLeftMouseClicked -= HandleIntendedMove;
         Object.Destroy(ghostInstance);
         GridSystem.Instance.DeleteManhattanDistanceGrid();
     }
 
-    public void HandleIntendedMove(Vector2 direction) {
-        Vector3 movement = new Vector3(direction.x, 0f, direction.y);
 
-        Vector3 intendedMovement = ghostPosition + movement;
+    public void HandleIntendedMove(Vector2 mousePos) {
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
 
-        TileData ghostTile = GridSystem.Instance.WorldPositionToGridTile(intendedMovement);
+        int layerMask = LayerMask.GetMask("Tile", "Unit");
+        TileData ghostTile = null;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask)) {
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Tile")) {
+                ghostTile = GridSystem.Instance.WorldPositionToGridTile(hit.point);
+            }
+        }
+
         if (ghostTile == null) {
             return;
         }
+
+        Vector3 intendedMovement = ghostTile.worldPosition;
+
         if (!ghostTile.isWalkable || ghostTile.isOccupied) {
             return;
         }
@@ -59,20 +73,26 @@ public class PlayerMoveState : ITurnState {
         ghostPosition = intendedMovement;
         ghostInstance.transform.position = ghostPosition;
     }
+
     public void HandleConfirmMove() {
-        activeUnit.transform.position = ghostInstance.transform.position;
-        activeUnit.transform.forward = ghostInstance.transform.forward;
+        TileData targetTile = GridSystem.Instance.WorldPositionToGridTile(ghostInstance.transform.position);
+        if (targetTile == null) return;
 
-        TileData currentTile = GridSystem.Instance.WorldPositionToGridTile(activeUnit.transform.position);
+        PlayerMoveCommand playerMoveCmd = new PlayerMoveCommand(activeUnit, targetTile);
 
-        Vector2Int newPosition = new Vector2Int(currentTile.gridX, currentTile.gridY);
+        AIDecision playerDecision = new AIDecision {
+            utilityScore = 100f,
+            intendedCommands = new List<ICommand> { playerMoveCmd }
+        };
 
-        UnitManager.Instance.MoveUnit(newPosition, activeUnit);
+        TimeLineManager.Instance.ScheduleAction(activeUnit, playerDecision);
+
+        // [컴파일 에러 해결] 추가된 virtualPosition 프로퍼티의 값을 변경하여 다음 공격 단계에 전달합니다.
+        activeUnit.virtualPosition = new Vector2Int(targetTile.gridX, targetTile.gridY);
 
         EventBus<DisableMoveButtonEvent>.Publish(new DisableMoveButtonEvent());
 
         machine.ChangeState(null);
-        //machine.ChangeState(new PlayerMoveState(machine));
     }
 
     private void SpawnGhost() {
@@ -99,4 +119,3 @@ public class PlayerMoveState : ITurnState {
         ghostInstance.SetActive(true);
     }
 }
-

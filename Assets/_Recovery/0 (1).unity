@@ -577,6 +577,7 @@ GameObject:
   - component: {fileID: 2064665784}
   - component: {fileID: 2064665785}
   - component: {fileID: 2064665786}
+  - component: {fileID: 2064665787}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -722,6 +723,18 @@ MonoBehaviour:
     prefab: {fileID: 6571263457396014950, guid: b4d132456e1acfb4bb10038eac68a218, type: 3}
   - type: 2
     prefab: {fileID: 6571263457396014950, guid: dfa61041c84f79b478a61b151a50efeb, type: 3}
+--- !u!114 &2064665787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064665775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16ad3a9918abfed45b3a22baf35f1036, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeLineManager
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

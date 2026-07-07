@@ -6,8 +6,11 @@ public class Unit : MonoBehaviour {
     [SerializeField] private UnitStatsSO baseState;
     [SerializeField] public GameObject ghostPrefab;
 
-    public UnitStats stats { get; private set;}
-    public Vector2Int currentPosition { get; private set;}
+    public UnitStats stats { get; private set; }
+    public Vector2Int currentPosition { get; private set; }
+
+    // [추가] 예약(조준) 단계에서 유닛의 미래 위치를 추적하기 위한 가상 좌표 프로퍼티
+    public Vector2Int virtualPosition { get; set; }
 
     public int unitSpeed { get; private set; }
 
@@ -21,10 +24,15 @@ public class Unit : MonoBehaviour {
 
         unitSpeed = stats.GetUnitSpeed();
         unitFaction = stats.GetUnitFaction();
+
+        // 초기화 시 가상 위치도 현재 물리적 위치와 동기화
+        virtualPosition = currentPosition;
     }
 
     public void SetPosition(Vector2Int currentPosition) {
         this.currentPosition = currentPosition;
+        // 실제 이동이 완료되면 가상 위치도 함께 맞추어 줍니다.
+        this.virtualPosition = currentPosition;
     }
 
     public void TakeDamage(float amount) {

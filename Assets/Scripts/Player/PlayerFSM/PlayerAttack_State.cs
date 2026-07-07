@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class PlayerAttackState : ITurnState{
+public class PlayerAttackState : ITurnState {
     private PlayerFSM machine;
     private Unit activeUnit;
     private int attackRange = 2;
@@ -14,7 +14,11 @@ public class PlayerAttackState : ITurnState{
     }
     public void Enter() {
         Debug.Log("Attack phase.");
-        validAttackTile = GridSystem.Instance.SpawnAttackRange(activeUnit.transform.position, attackRange);
+
+        // [변경] 유닛의 현재 고정 위치가 아닌, 예약 상태가 반영된 가상 위치를 기준으로 범위를 뿌립니다.
+        Vector3 virtualWorldPos = GridSystem.Instance.GetTileData(activeUnit.virtualPosition).worldPosition;
+        validAttackTile = GridSystem.Instance.SpawnAttackRange(virtualWorldPos, attackRange);
+
         PlayerInput.Instance.OnLeftMouseClicked += AttackTarget;
         PlayerInput.Instance.OnEnterTriggered += SkipTurn;
     }
@@ -52,20 +56,21 @@ public class PlayerAttackState : ITurnState{
                 Debug.Log("Out of attack range!");
                 return;
             }
-            if (!UnitManager.Instance.RegisteredUnit.TryGetValue(currentCordinate, out Unit targetUnit)) {
-                Debug.Log("Please click the unit!");
-                return;
-            }
-            if (targetUnit.unitFaction != Faction.Enemy) {
+
+            UnitManager.Instance.RegisteredUnit.TryGetValue(currentCordinate, out Unit targetUnit);
+
+            if (targetUnit != null && targetUnit.unitFaction != Faction.Enemy) {
                 Debug.Log("Can't attack this unit!");
                 return;
             }
 
-            Vector3 lookTarget = targetUnit.transform.position;
-            lookTarget.y = activeUnit.transform.position.y;
-            activeUnit.transform.LookAt(lookTarget);
+            AttackCommand attackCmd = new AttackCommand(activeUnit, targetUnit, currentCordinate);
+            AIDecision playerDecision = new AIDecision {
+                utilityScore = 100f,
+                intendedCommands = new List<ICommand> { attackCmd }
+            };
 
-            activeUnit.Attack(currentCordinate);
+            TimeLineManager.Instance.ScheduleAction(activeUnit, playerDecision);
 
             EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
             machine.ChangeState(null);
