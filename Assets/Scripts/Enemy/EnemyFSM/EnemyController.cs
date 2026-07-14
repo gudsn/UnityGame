@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// 적의 턴 행동 기획(의도) 수립 및 맵 타일 시각화 예고 시스템
 public class EnemyController : MonoBehaviour {
 
     [Header("하이라이트 설정")]
@@ -12,6 +13,39 @@ public class EnemyController : MonoBehaviour {
 
     private Dictionary<Unit, AIDecision> cachedEnemyDecisions = new Dictionary<Unit, AIDecision>();
 
+    public Dictionary<Unit, AIDecision> CachedEnemyDecisions => cachedEnemyDecisions;
+
+    // 특정 미래 틱 시점에 해당 적 유닛이 밟고 서 있을 타일을 경로 데이터 상에서 역산
+    public TileData GetEnemyTileAtTick(Unit enemyUnit, int targetTick) {
+        if (!cachedEnemyDecisions.TryGetValue(enemyUnit, out AIDecision decision)) {
+            return GridSystem.Instance.GetTileData(enemyUnit.currentPosition);
+        }
+
+        MoveCommand moveCmd = null;
+        foreach (ICommand cmd in decision.intendedCommands) {
+            if (cmd is MoveCommand m) {
+                moveCmd = m;
+                break;
+            }
+        }
+
+        if (moveCmd == null || moveCmd.path == null || moveCmd.path.Count == 0) {
+            return GridSystem.Instance.GetTileData(enemyUnit.currentPosition);
+        }
+
+        int pathIndex = targetTick - 1;
+        if (pathIndex < 0) {
+            return GridSystem.Instance.GetTileData(enemyUnit.currentPosition);
+        }
+        else if (pathIndex >= moveCmd.path.Count) {
+            return moveCmd.destination;
+        }
+        else {
+            return moveCmd.path[pathIndex];
+        }
+    }
+
+    // 모든 적의 행동 궤적 연산 후 위협 지역 및 화살표 가이드 장판을 맵에 시각화
     public void DisplayAllEnemyIntents() {
         GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
         cachedEnemyDecisions.Clear();
@@ -55,13 +89,11 @@ public class EnemyController : MonoBehaviour {
                             if (nextTile != null) {
                                 Vector3 outDir = (nextTile.worldPosition - currentTile.worldPosition).normalized;
 
-                                // 직진 구간 연산 (+180도 회전 보정)
                                 if (Vector3.Dot(inDir, outDir) > 0.9f) {
                                     resourceType = ArrowResourceType.Line;
                                     float angle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
                                     arrowRotation = Quaternion.Euler(0f, angle + 180f, 0f);
                                 }
-                                // 모퉁이 꺾임 구간 연산 (+180도 회전 보정)
                                 else {
                                     resourceType = ArrowResourceType.Corner;
                                     Vector3 cornerDir = (inDir + outDir).normalized;
@@ -70,7 +102,6 @@ public class EnemyController : MonoBehaviour {
                                 }
                             }
                             else {
-                                // 경로 종착지 촉 연산 (+180도 회전 보정)
                                 resourceType = ArrowResourceType.Head;
                                 float angle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
                                 arrowRotation = Quaternion.Euler(0f, angle + 180f, 0f);
@@ -93,6 +124,7 @@ public class EnemyController : MonoBehaviour {
         }
     }
 
+    // 라운드 준비가 마감되면 적의 연산된 예고 행동 목록을 타임라인 틱 엔진에 커밋 등록
     public void CommitEnemyActionsToTimeline() {
         foreach (var kvp in cachedEnemyDecisions) {
             Unit enemyUnit = kvp.Key;
@@ -125,6 +157,7 @@ public class EnemyController : MonoBehaviour {
         cachedEnemyDecisions.Clear();
     }
 
+    // 다음 라운드 진입 전 바닥 장판 가이드 및 화살표 시스템 일괄 수거
     public void ClearAllEnemyIntents() {
         GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
 
