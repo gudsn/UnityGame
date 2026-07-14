@@ -704,6 +704,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c834f8a814b331247afbf92a8a90102e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
+  enemyMoveHighlightType: 0
+  enemyAttackHighlightType: 1
+  tilePool: {fileID: 2064665786}
 --- !u!114 &2064665786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -723,6 +726,13 @@ MonoBehaviour:
     prefab: {fileID: 6571263457396014950, guid: b4d132456e1acfb4bb10038eac68a218, type: 3}
   - type: 2
     prefab: {fileID: 6571263457396014950, guid: dfa61041c84f79b478a61b151a50efeb, type: 3}
+  arrowPrefabList:
+  - type: 0
+    prefab: {fileID: 6571263457396014950, guid: 985640100a81425428b9f731d6aca362, type: 3}
+  - type: 1
+    prefab: {fileID: 6571263457396014950, guid: 57c83b1db794684438909495022cc738, type: 3}
+  - type: 2
+    prefab: {fileID: 6571263457396014950, guid: ed53b93d8334c1040b2ab90082628ed4, type: 3}
 --- !u!114 &2064665787
 MonoBehaviour:
   m_ObjectHideFlags: 0

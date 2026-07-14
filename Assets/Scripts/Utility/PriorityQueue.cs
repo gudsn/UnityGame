@@ -13,22 +13,15 @@ public class PriorityQueue<T> {
             this.value = value;
         }
     }
-    public enum HeapType { 
+    public enum HeapType {
         max,
         min
     }
-    // heap structure for priority queue
+
     public List<HeapData> heap = new List<HeapData>();
-
-    // dictionary for removing data <data, int>
     public Dictionary<T, int> data = new Dictionary<T, int>();
-    
-    // -1 for min-heap, 1 for max-hip
     private int compare = 0;
-
-    // Last index
     private int tailIndex = 0;
-
     private long sequenceCounter = 0;
 
     public PriorityQueue(HeapType type) {
@@ -87,19 +80,14 @@ public class PriorityQueue<T> {
 
         Swap(index, tailIndex);
 
-        data.Remove(value);
+        data.Remove(heap[tailIndex].value);
         heap.RemoveAt(tailIndex);
         tailIndex--;
 
-        // If removed node is an ancesstor of tail node then shift down
         ShiftDown(index);
-
-        // If removed node isn't an ancesstor of tail node tail node can be greater(less) than child node
         ShiftUp(index);
-
     }
 
-    // DONT USE THIS WHEN YOU HAVE MUTIPLE SAME DATA IN PQ
     public void Update(T currentValue, int changePriority, T changeValue) {
         long currentSequnce;
         if (!data.TryGetValue(currentValue, out int index)) {
@@ -113,47 +101,55 @@ public class PriorityQueue<T> {
         if (heap[index].priority == changePriority) {
             currentSequnce = sequenceCounter;
             sequenceCounter++;
-        } else {
+        }
+        else {
             currentSequnce = heap[index].sequence;
-        } 
+        }
 
-            heap[index] = new HeapData(changePriority, currentSequnce, changeValue);
+        heap[index] = new HeapData(changePriority, currentSequnce, changeValue);
 
         data.Remove(currentValue);
         data[changeValue] = index;
 
         ShiftDown(index);
         ShiftUp(index);
-        return;   
     }
 
     public int GetFirstPriority() {
         return heap[1].priority;
     }
 
-    // 읽기 전용 Count 프로퍼티 추가 (.NET 관례)
     public int Count {
         get { return tailIndex; }
+    }
+
+    /// <summary>
+    /// [확장 추가] 대기열을 파괴하지 않고 내부 요소를 시간 오름차순으로 정렬하여 반환합니다.
+    /// </summary>
+    public List<KeyValuePair<int, T>> GetAllElements() {
+        List<KeyValuePair<int, T>> elements = new List<KeyValuePair<int, T>>();
+        for (int i = 1; i <= tailIndex; i++) {
+            if (heap[i].value != null) {
+                elements.Add(new KeyValuePair<int, T>(heap[i].priority, heap[i].value));
+            }
+        }
+        elements.Sort((x, y) => x.Key.CompareTo(y.Key));
+        return elements;
     }
 
     private void ShiftUp(int index) {
         int parent = index / 2;
         while (parent != 0) {
-
             int prioritycmp = heap[index].priority.CompareTo(heap[parent].priority);
-            if (prioritycmp == -compare) {
-                break;
-            } 
-            if (prioritycmp == 0){
-                if (heap[index].sequence > heap[parent].sequence) {
-                    break;
-                }
+            if (prioritycmp == -compare) break;
+            if (prioritycmp == 0) {
+                if (heap[index].sequence > heap[parent].sequence) break;
             }
 
             Swap(index, parent);
             index = parent;
             parent = index / 2;
-        } 
+        }
     }
 
     private void ShiftDown(int index) {
@@ -175,13 +171,9 @@ public class PriorityQueue<T> {
             }
 
             int prioritycmp = heap[compareIndex].priority.CompareTo(heap[currentIndex].priority);
-            if (prioritycmp == -compare) {
-                break;
-            }
+            if (prioritycmp == -compare) break;
             if (prioritycmp == 0) {
-                if (heap[compareIndex].sequence > heap[currentIndex].sequence) {
-                    break;
-                }
+                if (heap[compareIndex].sequence > heap[currentIndex].sequence) break;
             }
 
             Swap(compareIndex, currentIndex);
@@ -191,7 +183,6 @@ public class PriorityQueue<T> {
 
     private void Swap(int A, int B) {
         HeapData temp = heap[A];
-
         heap[A] = heap[B];
         heap[B] = temp;
 

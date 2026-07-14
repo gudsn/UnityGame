@@ -18,5 +18,5 @@ MonoBehaviour:
   baseAttackPoint: 10
   baseDefensePoint: 5
   moveRange: 3
-  unitSpeed: 11
+  unitSpeed: 10
   maxMagicPoint: 100

@@ -17,5 +17,5 @@ MonoBehaviour:
   maxHealthPoint: 40
   baseAttackPoint: 10
   baseDefensePoint: 0
-  moveRange: 2
+  moveRange: 3
   unitSpeed: 10
