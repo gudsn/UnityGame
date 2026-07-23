@@ -521,6 +521,7 @@ MonoBehaviour:
   hpBarTempelete: {fileID: 9197481963319205126, guid: 06589d85f868b7e49a383c3815ae04a1, type: 3}
   tooltipTemplate: {fileID: 9197481963319205126, guid: 8ab7a6d684ab09d45bcd5bc3317efc5b, type: 3}
   playerActionsTemplate: {fileID: 9197481963319205126, guid: 49af1444cb13b7d45bb42fd42256c132, type: 3}
+  timelineBarTemplate: {fileID: 9197481963319205126, guid: e09aab2a936d53748ad64c178b812d9c, type: 3}
 --- !u!114 &1306128839
 MonoBehaviour:
   m_ObjectHideFlags: 0

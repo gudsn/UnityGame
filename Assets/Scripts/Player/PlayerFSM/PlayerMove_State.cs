@@ -39,7 +39,15 @@ public class PlayerMoveState : ITurnState {
         if (ghostInstance != null) {
             Object.Destroy(ghostInstance);
         }
+
+        // 플레이어의 이동 하이라이트 삭제
         GridSystem.Instance.DeleteManhattanDistanceGrid();
+
+        // [유지] 이동 조준 종료 후 적군의 예고 하이라이트 복원
+        EnemyController enemyController = Object.FindFirstObjectByType<EnemyController>();
+        if (enemyController != null) {
+            enemyController.RedrawCurrentEnemyIntents();
+        }
     }
 
     public void HandleIntendedMove(Vector2 mousePos) {
@@ -69,22 +77,14 @@ public class PlayerMoveState : ITurnState {
         TileData targetTile = GridSystem.Instance.WorldPositionToGridTile(ghostInstance.transform.position);
         if (targetTile == null) return;
 
-        // 1. 매크로 명령 생성 및 타임라인 예약 등록
         PlayerMoveCommand playerMoveCmd = new PlayerMoveCommand(activeUnit, targetTile);
-        AIDecision playerDecision = new AIDecision {
-            utilityScore = 100f,
-            intendedCommands = new List<ICommand> { playerMoveCmd }
-        };
-        TimeLineManager.Instance.ScheduleAction(activeUnit, playerDecision);
+        TimeLineManager.Instance.ScheduleAction(activeUnit, playerMoveCmd);
 
-        // 2. 가상 위치 정보 업데이트 (이어지는 공격 범위 연산의 기준점이 됨)
         activeUnit.virtualPosition = new Vector2Int(targetTile.gridX, targetTile.gridY);
 
-        // 3. UI 버튼 비활성화 이벤트 발행 및 FSM 내 이동 완료 플래그 세팅
         EventBus<DisableMoveButtonEvent>.Publish(new DisableMoveButtonEvent());
         machine.HasReservedMove = true;
 
-        // [핵심 복구] 턴을 폐막하지 않고 다른 행동(공격 등)을 추가 예약할 수 있도록 Idle 상태로 복귀
         machine.ChangeState(new PlayerIdleState(machine));
     }
 

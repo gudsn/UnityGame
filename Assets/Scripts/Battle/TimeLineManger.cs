@@ -23,39 +23,54 @@ public class TimeLineManager : MonoBehaviour {
     }
 
     /// <summary>
-    /// 플레이어용 기존 스케줄러 인터페이스 유지 (기존 시간 계산법 사용)
+    /// 단일 ICommand와 소유 유닛을 받아 유닛의 이전 틱 작업에 이어 틱 커맨드로 분해 등록합니다.
     /// </summary>
-    public void ScheduleAction(Unit unit, AIDecision decision) {
-        // 내부 연산의 안전을 위해 0틱 기준으로 동작하도록 오버로딩 호출로 토스합니다.
-        ScheduleAction(unit, decision, 0);
+    public void ScheduleAction(Unit unit, ICommand macroCommand) {
+        if (unit == null || macroCommand == null) return;
+
+        Type cmdType = macroCommand.GetType();
+        if (!schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) {
+            Debug.LogWarning($"[TimeLineManager] 등록되지 않은 명령어 스케줄러입니다: {cmdType.Name}");
+            return;
+        }
+
+        // 1. 해당 유닛이 등록한 틱 커맨드들 중 가장 마지막 틱 검색
+        int startTick = 0;
+        var ownerCommands = timelineQueue.Where(cmd => cmd.owner == unit).ToList();
+
+        if (ownerCommands.Count > 0) {
+            // 소유주의 기록이 있으면: 가장 마지막 틱 + 1부터 시작
+            int lastTick = ownerCommands.Max(cmd => cmd.executeTick);
+            startTick = lastTick + 1;
+        }
+        else {
+            // 소유주의 기록이 없으면: 0틱부터 시작
+            startTick = 0;
+        }
+
+        // 2. 스케줄러를 통해 ICommand -> List<TickCommand> 분해
+        List<TickCommand> microTicks = scheduler.Decompose(macroCommand, startTick);
+
+        // 3. 분해된 틱 커맨드들을 전체 Queue에 연쇄 삽입
+        if (microTicks != null && microTicks.Count > 0) {
+            timelineQueue.AddRange(microTicks);
+            Debug.Log($"<color=cyan>[스케줄링 완료]</color> 유닛: {unit.gameObject.name} | 명령: {cmdType.Name} | 틱 범위: {microTicks.First().executeTick} ~ {microTicks.Last().executeTick}");
+        }
     }
 
     /// <summary>
-    /// [핵심 추가] 동시 턴 시스템을 위해 시작 틱 기준점(forcedStartTick)을 강제로 지정하는 스케줄링 메서드
+    /// AIDecision 내부의 여러 명령 목록을 유닛 타임라인에 순차적으로 바인딩합니다.
     /// </summary>
-    public void ScheduleAction(Unit unit, AIDecision decision, int forcedStartTick) {
+    public void ScheduleAction(Unit unit, AIDecision decision) {
         if (decision == null || decision.intendedCommands == null) return;
 
-        // 이번 라운드 진영 동시 출발을 위해 강제 지정된 틱(0)에서 연산을 출발시킵니다.
-        int currentTick = forcedStartTick;
-
-        foreach (var macroCommand in decision.intendedCommands) {
-            Type cmdType = macroCommand.GetType();
-
-            if (schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) {
-                List<TickCommand> microTicks = scheduler.Decompose(macroCommand, currentTick);
-
-                if (microTicks.Count > 0) {
-                    timelineQueue.AddRange(microTicks);
-                    // 한 유닛의 연속된 하위 행동(이동 후 공격 등)은 누적해서 틱을 연결합니다.
-                    currentTick = microTicks.Last().executeTick;
-                }
-            }
+        foreach (var command in decision.intendedCommands) {
+            ScheduleAction(unit, command);
         }
     }
 
     public IEnumerator RunTickEngine() {
-        // 1순위: 실행 틱 넘버 순, 2순위: 우선순위(Move -> Buff -> Attack) 순 정렬
+        // 실행 틱 오름차순 -> 우선순위(Move -> Buff -> Attack) 순 정렬
         timelineQueue = timelineQueue
             .OrderBy(cmd => cmd.executeTick)
             .ThenBy(cmd => cmd.priority)
@@ -72,12 +87,12 @@ public class TimeLineManager : MonoBehaviour {
         while (timelineQueue.Count > 0) {
             TickCommand currentCmd = timelineQueue[0];
 
-            // 틱 넘버가 전진했을 경우, 이전 틱의 모든 병렬 코루틴 완료를 기다린 후 넘어감
+            // 틱 번호가 전진할 경우 이전 틱의 모든 병렬 연산 완료 대기
             if (currentCmd.executeTick > currentTick) {
                 foreach (var coroutine in activeCoroutines) yield return coroutine;
                 activeCoroutines.Clear();
 
-                Debug.Log($"--- Tick {currentTick} 완료. 다음 Tick으로 넘어가기 전 0.5초 대기 ---");
+                Debug.Log($"--- Tick {currentTick} 완료. 다음 Tick으로 전진 ---");
                 yield return new WaitForSeconds(0.5f);
 
                 currentTick = currentCmd.executeTick;

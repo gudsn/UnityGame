@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// 플레이어 공격 범위 설정 및 조준 호버링 기반 동적 적중 예측 시뮬레이션 상태
 public class PlayerAttackState : ITurnState {
     private PlayerFSM machine;
     private Unit activeUnit;
@@ -19,7 +18,6 @@ public class PlayerAttackState : ITurnState {
         this.activeUnit = machine.activeUnit;
     }
 
-    // 공격 페이즈 이벤트를 바인딩하고 예측 적중 계산용 비주얼 고스트 풀 사전 확보
     public void Enter() {
         Debug.Log("[공격 페이즈] 사거리 내의 적을 클릭하여 공격을 예약하세요.");
 
@@ -38,7 +36,6 @@ public class PlayerAttackState : ITurnState {
         PlayerInput.Instance.OnEnterTriggered += SkipTurn;
     }
 
-    // 매 프레임 마우스 포인터 감지를 통해 호버링 타일 업데이트 분석
     public void Execute() {
         if (Mouse.current != null) {
             Vector2 mousePos = Mouse.current.position.ReadValue();
@@ -54,15 +51,19 @@ public class PlayerAttackState : ITurnState {
         }
     }
 
-    // 상태 탈출 시 맵 하이라이트를 반환하고 소집된 적 고스트 풀링 데이터 일괄 해제
     public void Exit() {
         CleanupGhostPool();
         GridSystem.Instance.DeleteAttackRange();
         PlayerInput.Instance.OnLeftMouseClicked -= AttackTarget;
         PlayerInput.Instance.OnEnterTriggered -= SkipTurn;
+
+        // [유지] 공격 조준 종료 후 적군의 예고 하이라이트 복원
+        EnemyController enemyController = Object.FindFirstObjectByType<EnemyController>();
+        if (enemyController != null) {
+            enemyController.RedrawCurrentEnemyIntents();
+        }
     }
 
-    // 씬 내 적 유닛들의 비주얼 고스트들을 풀에 비활성 상태로 선행 생성 및 붉은색 반투명 가공
     private void InitializeGhostPool() {
         EnemyController enemyController = Object.FindFirstObjectByType<EnemyController>();
         if (enemyController == null) return;
@@ -94,7 +95,6 @@ public class PlayerAttackState : ITurnState {
         }
     }
 
-    // 조준 중인 타일에 지정 공격 도달 틱 시점 적이 밟게 될 경우 해당 고스트 위치를 0.5f 보정하여 활성화
     private void UpdateAttackPredictionGhosts(TileData targetedTile) {
         DeactivateAllGhosts();
 
@@ -141,7 +141,6 @@ public class PlayerAttackState : ITurnState {
         previewGhostPool.Clear();
     }
 
-    // 타겟 지점을 클릭하여 캡슐화된 매크로 명령(AttackCommand)을 타임라인 스케줄러에 등록
     public void AttackTarget(Vector2 cordinate) {
         Ray ray = Camera.main.ScreenPointToRay(cordinate);
 
@@ -174,11 +173,7 @@ public class PlayerAttackState : ITurnState {
             }
 
             AttackCommand attackCmd = new AttackCommand(activeUnit, targetUnit, currentCordinate);
-            AIDecision playerDecision = new AIDecision {
-                utilityScore = 100f,
-                intendedCommands = new List<ICommand> { attackCmd }
-            };
-            TimeLineManager.Instance.ScheduleAction(activeUnit, playerDecision);
+            TimeLineManager.Instance.ScheduleAction(activeUnit, attackCmd);
 
             EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
             machine.HasReservedAttack = true;

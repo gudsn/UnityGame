@@ -88,7 +88,7 @@ public class MoveScheduler : IActionScheduler {
     }
 }
 
-// 공격 스케줄러 (사거리 2칸 내 실시간 모색 방식)
+// 공격 스케줄러 (진영 유연 판정 및 사거리 내 실시간 모색 방식)
 public class AttackScheduler : IActionScheduler {
     public List<TickCommand> Decompose(ICommand macroCommand, int startTick) {
         List<TickCommand> tickCommands = new List<TickCommand>();
@@ -104,12 +104,12 @@ public class AttackScheduler : IActionScheduler {
             actionLogic = WaitLogic(0.5f)
         });
 
-        // 2틱: 실제 타격 연산 (실행되는 시점에 범위 내 플레이어를 타겟팅)
+        // 2틱: 실제 타격 연산 (실행되는 시점에 범위 내 상대 진영 유닛을 타겟팅)
         tickCommands.Add(new TickCommand {
             executeTick = startTick + 2,
             priority = CommandPriority.Attack,
             owner = attackCmd.owner,
-            actionLogic = AttackLogic(attackCmd.owner)
+            actionLogic = AttackLogic(attackCmd.owner, attackCmd.targetCoordinate)
         });
 
         return tickCommands;
@@ -119,36 +119,51 @@ public class AttackScheduler : IActionScheduler {
         yield return new WaitForSeconds(waitTime);
     }
 
-    // [기획 반영] 실행 시점 기준, 내 주변 맨해튼 2칸 이내에 타겟 플레이어가 있는지 확인합니다.
-    private IEnumerator AttackLogic(Unit owner) {
+    // [수정 완료] 진영 판정을 동적으로 변경하고 조준 타일을 최우선 탐색
+    private IEnumerator AttackLogic(Unit owner, Vector2Int intendedTargetCoord) {
         int attackRange = 2; // 맨해튼 거리 2칸
-        Unit targetPlayer = null;
-        Vector2Int targetCoordinate = Vector2Int.zero;
+        Unit finalTargetUnit = null;
 
-        // 공격 애니메이션/연출 발동 직전, 범위 내에 서 있는 플레이어가 있는지 실시간 스캔
-        foreach (var kvp in UnitManager.Instance.RegisteredUnit) {
-            Unit candidate = kvp.Value;
-            if (candidate == null || candidate.unitFaction != Faction.Player || candidate.GetHealth() <= 0) continue;
+        // 1. 공격 주체(owner)의 상대 진영(Opposing Faction) 결정
+        Faction targetFaction = (owner.unitFaction == Faction.Player) ? Faction.Enemy : Faction.Player;
 
-            int distance = GridSystem.Instance.GetManhattanDistance(owner.currentPosition, candidate.currentPosition);
-            if (distance <= attackRange) {
-                targetPlayer = candidate;
-                targetCoordinate = candidate.currentPosition;
-                break; // 유효한 플레이어를 탐색하면 타겟으로 실시간 잠금
+        // 2. 예약 당시 조준했던 타일(intendedTargetCoord)에 적이 존재하는지 1차 확인
+        if (UnitManager.Instance.RegisteredUnit.TryGetValue(intendedTargetCoord, out Unit originalTarget)) {
+            if (originalTarget != null && originalTarget.unitFaction == targetFaction && originalTarget.GetHealth() > 0) {
+                int dist = GridSystem.Instance.GetManhattanDistance(owner.currentPosition, originalTarget.currentPosition);
+                if (dist <= attackRange) {
+                    finalTargetUnit = originalTarget;
+                }
             }
         }
 
-        // 사거리 안에 플레이어가 전혀 도달하지 못했거나 도망쳤다면 공격이 불발(헛방) 처리됩니다.
-        if (targetPlayer == null) {
-            Debug.Log($"<color=yellow>[공격 실패]</color> {owner.gameObject.name}의 사거리(맨해튼 2칸) 내에 플레이어가 도달하지 못해 허공을 가릅니다.");
+        // 3. 조준했던 적이 없거나 범위를 벗어났다면, 사거리(맨해튼 2칸) 내의 다른 적 유닛 탐색
+        if (finalTargetUnit == null) {
+            foreach (var kvp in UnitManager.Instance.RegisteredUnit) {
+                Unit candidate = kvp.Value;
+                if (candidate == null || candidate.unitFaction != targetFaction || candidate.GetHealth() <= 0) continue;
+
+                int distance = GridSystem.Instance.GetManhattanDistance(owner.currentPosition, candidate.currentPosition);
+                if (distance <= attackRange) {
+                    finalTargetUnit = candidate;
+                    break;
+                }
+            }
+        }
+
+        // 4. 사거리 내에 적 유닛이 하나도 존재하지 않는다면 공격 불발(헛방) 처리
+        if (finalTargetUnit == null) {
+            Debug.Log($"<color=yellow>[공격 실패]</color> {owner.gameObject.name}의 사거리(맨해튼 {attackRange}칸) 내에 타깃({targetFaction})이 존재하지 않아 허공을 가릅니다.");
             yield break;
         }
 
-        Vector3 lookTarget = targetPlayer.transform.position;
+        // 5. 타겟 방향을 바라보고 공격 이벤트 발생
+        Vector3 lookTarget = finalTargetUnit.transform.position;
         lookTarget.y = owner.transform.position.y;
         owner.transform.LookAt(lookTarget);
 
-        owner.Attack(targetCoordinate);
+        Vector2Int hitCoordinate = finalTargetUnit.currentPosition;
+        owner.Attack(hitCoordinate);
         yield return new WaitForSeconds(0.5f);
     }
 }

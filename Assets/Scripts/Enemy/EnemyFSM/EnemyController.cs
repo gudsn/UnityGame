@@ -67,6 +67,29 @@ public class EnemyController : MonoBehaviour {
             if (decision == null || decision.intendedCommands == null) continue;
 
             cachedEnemyDecisions[currentUnit] = decision;
+        }
+
+        // 캐싱된 결정을 바탕으로 시각화 수행
+        RedrawCurrentEnemyIntents();
+    }
+
+    /// <summary>
+    /// [핵심 추가] AI 재연산 없이, 캐싱된 기존 적군의 의도 장판 및 화살표만 화면에 다시 그려줍니다.
+    /// </summary>
+    public void RedrawCurrentEnemyIntents() {
+        GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
+
+        if (tilePool != null) {
+            tilePool.ReturnArrowTiles(ArrowResourceType.Line);
+            tilePool.ReturnArrowTiles(ArrowResourceType.Corner);
+            tilePool.ReturnArrowTiles(ArrowResourceType.Head);
+        }
+
+        foreach (var kvp in cachedEnemyDecisions) {
+            Unit currentUnit = kvp.Key;
+            AIDecision decision = kvp.Value;
+
+            if (currentUnit == null || currentUnit.GetHealth() <= 0 || decision == null) continue;
 
             foreach (ICommand cmd in decision.intendedCommands) {
                 if (cmd is MoveCommand moveCmd) {
@@ -124,34 +147,19 @@ public class EnemyController : MonoBehaviour {
         }
     }
 
-    // 라운드 준비가 마감되면 적의 연산된 예고 행동 목록을 타임라인 틱 엔진에 커밋 등록
+    // 라운드 준비가 마감되면 적의 예고 행동들을 타임라인 스케줄러에 순차 커밋
     public void CommitEnemyActionsToTimeline() {
         foreach (var kvp in cachedEnemyDecisions) {
             Unit enemyUnit = kvp.Key;
             AIDecision decision = kvp.Value;
 
             if (enemyUnit != null && enemyUnit.GetHealth() > 0) {
-                List<ICommand> finalizedCommands = new List<ICommand>();
-
                 foreach (ICommand cmd in decision.intendedCommands) {
                     if (cmd is MoveCommand moveCmd) {
-                        finalizedCommands.Add(moveCmd);
                         enemyUnit.virtualPosition = new Vector2Int(moveCmd.destination.gridX, moveCmd.destination.gridY);
                     }
-                    else if (cmd is AttackCommand attackCmd) {
-                        finalizedCommands.Add(attackCmd);
-                    }
-                    else if (cmd is WaitCommand waitCmd) {
-                        finalizedCommands.Add(waitCmd);
-                    }
+                    TimeLineManager.Instance.ScheduleAction(enemyUnit, cmd);
                 }
-
-                AIDecision timelineReadyDecision = new AIDecision {
-                    utilityScore = decision.utilityScore,
-                    intendedCommands = finalizedCommands
-                };
-
-                TimeLineManager.Instance.ScheduleAction(enemyUnit, timelineReadyDecision, 0);
             }
         }
         cachedEnemyDecisions.Clear();
