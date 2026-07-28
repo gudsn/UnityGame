@@ -139,6 +139,7 @@ public class PlayerInput : MonoBehaviour {
         tooltipTimer = 0;
         isTooltipActive = false;
     }
+
     private void UpdateTileHighlight(TileData newHoverTile) {
         if (currentHoverTile == newHoverTile) return;
 
@@ -153,6 +154,7 @@ public class PlayerInput : MonoBehaviour {
             tilePool.GetHighLightTile(HighlightType.Hover, hoverTilePos);
         }
     }
+
     private void UpdateUnitTooltipState(Unit newHoverUnit) {
         if (currentHoverUnit == newHoverUnit) return;
 

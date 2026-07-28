@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="PlayerInputUI.uss" />
+    
+    <ui:VisualElement class="root-container">
+        <ui:Button name="add-box-btn" text="+ 박스 추가하기" class="add-button" />
+
+        <ui:VisualElement name="box-chain-container" class="chain-container" />
+    </ui:VisualElement>
+</ui:UXML>

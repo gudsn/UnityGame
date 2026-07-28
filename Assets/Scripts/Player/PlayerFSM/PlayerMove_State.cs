@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerMoveState : ITurnState {
     private PlayerFSM machine;
@@ -11,6 +12,9 @@ public class PlayerMoveState : ITurnState {
     private int moveRange;
     private HashSet<TileData> validMoveTiles;
 
+    // UI 박스 그룹 참조 보관용
+    private VisualElement moveGroupPreview;
+
     public PlayerMoveState(PlayerFSM machine) {
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
@@ -20,12 +24,16 @@ public class PlayerMoveState : ITurnState {
         moveRange = activeUnit.GetMoveRange();
         Debug.Log("[이동 페이즈] 이동할 타일을 클릭한 후 Enter 키를 눌러 예약하세요.");
 
+        // 1. Move 상태 진입 시 최대 이동 범위만큼 UI 틱 박스 그룹 프리뷰 생성
+        if (PlayerInputUI.Instance != null) {
+            moveGroupPreview = PlayerInputUI.Instance.CreateMovePreviewGroup(moveRange);
+        }
+
         PlayerInput.Instance.OnEnterTriggered += HandleConfirmMove;
         PlayerInput.Instance.OnLeftMouseClicked += HandleIntendedMove;
 
         SpawnGhost();
 
-        // 가상 위치(virtualPosition) 세계 좌표를 기준으로 이동 그리드 생성
         Vector3 virtualWorldPos = GridSystem.Instance.GetTileData(activeUnit.virtualPosition).worldPosition;
         validMoveTiles = GridSystem.Instance.SpawnManhattanDistanceGrid(virtualWorldPos, moveRange, HighlightType.Move);
     }
@@ -40,10 +48,8 @@ public class PlayerMoveState : ITurnState {
             Object.Destroy(ghostInstance);
         }
 
-        // 플레이어의 이동 하이라이트 삭제
         GridSystem.Instance.DeleteManhattanDistanceGrid();
 
-        // [유지] 이동 조준 종료 후 적군의 예고 하이라이트 복원
         EnemyController enemyController = Object.FindFirstObjectByType<EnemyController>();
         if (enemyController != null) {
             enemyController.RedrawCurrentEnemyIntents();
@@ -78,6 +84,12 @@ public class PlayerMoveState : ITurnState {
         if (targetTile == null) return;
 
         PlayerMoveCommand playerMoveCmd = new PlayerMoveCommand(activeUnit, targetTile);
+
+        // 2. 이동 확정 시 실제 A* 경로 타일 수(path.Count)만큼 UI 틱 박스 수 조정
+        if (PlayerInputUI.Instance != null && playerMoveCmd.path != null) {
+            PlayerInputUI.Instance.UpdateMoveGroupTicks(moveGroupPreview, playerMoveCmd.path.Count);
+        }
+
         TimeLineManager.Instance.ScheduleAction(activeUnit, playerMoveCmd);
 
         activeUnit.virtualPosition = new Vector2Int(targetTile.gridX, targetTile.gridY);

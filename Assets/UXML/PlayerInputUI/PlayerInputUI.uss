@@ -1,0 +1,62 @@
+.root-container {
+    padding: 20px;
+    align-items: flex-start;
+}
+
+/* 추가 버튼 숨김 */
+.add-button {
+    display: none;
+}
+
+.chain-container {
+    flex-direction: row;
+    align-items: center;
+    height: 60px;
+    background-color: transparent;
+}
+
+.command-group {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 8px;
+    cursor: pan;
+    position: relative;
+}
+
+.command-group.is-dragging {
+    opacity: 0.7;
+    scale: 1.05;
+}
+
+/* 정사각형 + 조금 더 밝은 회색 바탕(#3F3F46) + 명확한 테두리 */
+.box-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    aspect-ratio: 1;
+    background-color: #3F3F46;
+    border-width: 1px;
+    border-color: #646470;
+    margin: 0;
+    padding: 6px;
+    flex-shrink: 0;
+}
+
+/* 박스 내부 아이콘 이미지 스타일 (유니티 경고 해결) */
+.box-icon {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.box-label {
+    font-size: 12px;
+    color: #F4F4F5;
+    -unity-text-align: middle-center;
+}
+
+.box-divider {
+    width: 0px;
+}

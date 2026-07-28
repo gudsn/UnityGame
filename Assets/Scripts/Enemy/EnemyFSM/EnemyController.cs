@@ -73,9 +73,7 @@ public class EnemyController : MonoBehaviour {
         RedrawCurrentEnemyIntents();
     }
 
-    /// <summary>
-    /// [핵심 추가] AI 재연산 없이, 캐싱된 기존 적군의 의도 장판 및 화살표만 화면에 다시 그려줍니다.
-    /// </summary>
+    // 캐싱된 적 의도(이동 화살표 및 공격 범위를 맵에 표시)
     public void RedrawCurrentEnemyIntents() {
         GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
 
@@ -92,9 +90,8 @@ public class EnemyController : MonoBehaviour {
             if (currentUnit == null || currentUnit.GetHealth() <= 0 || decision == null) continue;
 
             foreach (ICommand cmd in decision.intendedCommands) {
+                // 이동 명령 처리: 이동 타일 하이라이트는 생략하고 화살표만 생성
                 if (cmd is MoveCommand moveCmd) {
-                    GridSystem.Instance.SpawnEnemyMovePathIntent(moveCmd.path, enemyMoveHighlightType);
-
                     List<TileData> path = moveCmd.path;
                     if (path != null && path.Count > 0 && tilePool != null) {
                         TileData startTile = GridSystem.Instance.GetTileData(currentUnit.currentPosition);
@@ -109,6 +106,7 @@ public class EnemyController : MonoBehaviour {
                             Quaternion arrowRotation = Quaternion.identity;
                             ArrowResourceType resourceType = ArrowResourceType.Line;
 
+                            // 직선, 모퉁이, 종착지 화살표 리소스 및 회전값 연산
                             if (nextTile != null) {
                                 Vector3 outDir = (nextTile.worldPosition - currentTile.worldPosition).normalized;
 
@@ -134,6 +132,7 @@ public class EnemyController : MonoBehaviour {
                         }
                     }
                 }
+                // 공격 명령 처리: 이동 완료 후 예상 위치 기준 공격 범위 표시
                 if (cmd is AttackCommand) {
                     Vector2Int expectedPos = currentUnit.currentPosition;
                     foreach (var c in decision.intendedCommands) {

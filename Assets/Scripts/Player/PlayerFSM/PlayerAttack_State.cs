@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 
 public class PlayerAttackState : ITurnState {
     private PlayerFSM machine;
@@ -13,6 +14,9 @@ public class PlayerAttackState : ITurnState {
 
     private Dictionary<Unit, GameObject> previewGhostPool = new Dictionary<Unit, GameObject>();
 
+    // UI 박스 그룹 참조 보관용
+    private VisualElement attackGroupPreview;
+
     public PlayerAttackState(PlayerFSM machine) {
         this.machine = machine;
         this.activeUnit = machine.activeUnit;
@@ -20,6 +24,11 @@ public class PlayerAttackState : ITurnState {
 
     public void Enter() {
         Debug.Log("[공격 페이즈] 사거리 내의 적을 클릭하여 공격을 예약하세요.");
+
+        // 1. Attack 상태 진입 시 2틱(준비+공격) UI 박스 그룹 생성
+        if (PlayerInputUI.Instance != null) {
+            attackGroupPreview = PlayerInputUI.Instance.CreateAttackGroup();
+        }
 
         Vector3 virtualWorldPos = GridSystem.Instance.GetTileData(activeUnit.virtualPosition).worldPosition;
         validAttackTile = GridSystem.Instance.SpawnAttackRange(virtualWorldPos, attackRange);
@@ -57,7 +66,6 @@ public class PlayerAttackState : ITurnState {
         PlayerInput.Instance.OnLeftMouseClicked -= AttackTarget;
         PlayerInput.Instance.OnEnterTriggered -= SkipTurn;
 
-        // [유지] 공격 조준 종료 후 적군의 예고 하이라이트 복원
         EnemyController enemyController = Object.FindFirstObjectByType<EnemyController>();
         if (enemyController != null) {
             enemyController.RedrawCurrentEnemyIntents();
