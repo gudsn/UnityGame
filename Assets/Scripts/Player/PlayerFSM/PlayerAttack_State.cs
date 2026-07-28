@@ -12,10 +12,13 @@ public class PlayerAttackState : ITurnState {
     private int predictedAttackTick;
     private TileData lastHoveredTile = null;
 
+    private GameObject playerGhostInstance;
+
     private Dictionary<Unit, GameObject> previewGhostPool = new Dictionary<Unit, GameObject>();
 
     // UI 박스 그룹 참조 보관용
     private VisualElement attackGroupPreview;
+    private bool isAttackConfirmed = false; // 공격 확정 여부 플래그
 
     public PlayerAttackState(PlayerFSM machine) {
         this.machine = machine;
@@ -32,6 +35,8 @@ public class PlayerAttackState : ITurnState {
 
         Vector3 virtualWorldPos = GridSystem.Instance.GetTileData(activeUnit.virtualPosition).worldPosition;
         validAttackTile = GridSystem.Instance.SpawnAttackRange(virtualWorldPos, attackRange);
+
+        SpawnPlayerGhost(virtualWorldPos);
 
         int moveTicks = 0;
         if (machine.HasReservedMove) {
@@ -61,6 +66,16 @@ public class PlayerAttackState : ITurnState {
     }
 
     public void Exit() {
+        // 공격을 확정하지 않고 이탈 시 프리뷰 UI 박스 제거
+        if (!isAttackConfirmed && attackGroupPreview != null) {
+            attackGroupPreview.RemoveFromHierarchy();
+            attackGroupPreview = null;
+        }
+
+        if (playerGhostInstance != null) {
+            Object.Destroy(playerGhostInstance);
+        }
+
         CleanupGhostPool();
         GridSystem.Instance.DeleteAttackRange();
         PlayerInput.Instance.OnLeftMouseClicked -= AttackTarget;
@@ -70,6 +85,28 @@ public class PlayerAttackState : ITurnState {
         if (enemyController != null) {
             enemyController.RedrawCurrentEnemyIntents();
         }
+    }
+
+    private void SpawnPlayerGhost(Vector3 position) {
+        if (activeUnit.ghostPrefab == null) return;
+
+        playerGhostInstance = Object.Instantiate(activeUnit.ghostPrefab, position, activeUnit.transform.rotation);
+
+        int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
+        playerGhostInstance.layer = ignoreRaycastLayer;
+
+        foreach (Transform child in playerGhostInstance.GetComponentsInChildren<Transform>()) {
+            child.gameObject.layer = ignoreRaycastLayer;
+        }
+
+        Renderer ghostRenderer = playerGhostInstance.GetComponentInChildren<Renderer>();
+        if (ghostRenderer != null) {
+            Color newColor = ghostRenderer.material.color;
+            newColor.a = 0.5f;
+            ghostRenderer.material.color = newColor;
+        }
+
+        playerGhostInstance.SetActive(true);
     }
 
     private void InitializeGhostPool() {
@@ -182,6 +219,8 @@ public class PlayerAttackState : ITurnState {
 
             AttackCommand attackCmd = new AttackCommand(activeUnit, targetUnit, currentCordinate);
             TimeLineManager.Instance.ScheduleAction(activeUnit, attackCmd);
+
+            isAttackConfirmed = true; // 공격 확정 플래그 설정
 
             EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
             machine.HasReservedAttack = true;

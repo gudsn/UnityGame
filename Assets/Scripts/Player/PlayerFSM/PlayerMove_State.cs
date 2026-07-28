@@ -14,6 +14,7 @@ public class PlayerMoveState : ITurnState {
 
     // UI 박스 그룹 참조 보관용
     private VisualElement moveGroupPreview;
+    private bool isMoveConfirmed = false; // 이동 확정 여부 플래그
 
     public PlayerMoveState(PlayerFSM machine) {
         this.machine = machine;
@@ -43,6 +44,12 @@ public class PlayerMoveState : ITurnState {
     public void Exit() {
         PlayerInput.Instance.OnEnterTriggered -= HandleConfirmMove;
         PlayerInput.Instance.OnLeftMouseClicked -= HandleIntendedMove;
+
+        // 행동을 확정하지 않고 이탈 시 프리뷰 UI 박스 제거
+        if (!isMoveConfirmed && moveGroupPreview != null) {
+            moveGroupPreview.RemoveFromHierarchy();
+            moveGroupPreview = null;
+        }
 
         if (ghostInstance != null) {
             Object.Destroy(ghostInstance);
@@ -85,10 +92,12 @@ public class PlayerMoveState : ITurnState {
 
         PlayerMoveCommand playerMoveCmd = new PlayerMoveCommand(activeUnit, targetTile);
 
-        // 2. 이동 확정 시 실제 A* 경로 타일 수(path.Count)만큼 UI 틱 박스 수 조정
+        // 2. 이동 확정 시 실제 A* 경로 타일 수만큼 UI 틱 박스 수 조정
         if (PlayerInputUI.Instance != null && playerMoveCmd.path != null) {
             PlayerInputUI.Instance.UpdateMoveGroupTicks(moveGroupPreview, playerMoveCmd.path.Count);
         }
+
+        isMoveConfirmed = true; // 이동 확정 플래그 설정
 
         TimeLineManager.Instance.ScheduleAction(activeUnit, playerMoveCmd);
 

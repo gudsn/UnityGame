@@ -106,23 +106,37 @@ public class EnemyController : MonoBehaviour {
                             Quaternion arrowRotation = Quaternion.identity;
                             ArrowResourceType resourceType = ArrowResourceType.Line;
 
-                            // 직선, 모퉁이, 종착지 화살표 리소스 및 회전값 연산
                             if (nextTile != null) {
                                 Vector3 outDir = (nextTile.worldPosition - currentTile.worldPosition).normalized;
 
+                                // 직선 구간 (inDir와 outDir의 방향이 같음)
                                 if (Vector3.Dot(inDir, outDir) > 0.9f) {
                                     resourceType = ArrowResourceType.Line;
                                     float angle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
                                     arrowRotation = Quaternion.Euler(0f, angle + 180f, 0f);
                                 }
+                                // 모퉁이 구간 (90도 꺾임)
                                 else {
                                     resourceType = ArrowResourceType.Corner;
-                                    Vector3 cornerDir = (inDir + outDir).normalized;
-                                    float angle = Mathf.Atan2(cornerDir.x, cornerDir.z) * Mathf.Rad2Deg;
-                                    arrowRotation = Quaternion.Euler(0f, angle + 135f, 0f);
+
+                                    // 들어오는 방향 기준 기본 각도
+                                    float baseAngle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
+
+                                    // 외적(Cross Product)으로 좌/우 회전 방향 판별
+                                    float crossY = Vector3.Cross(inDir, outDir).y;
+
+                                    if (crossY > 0f) {
+                                        // 우회전인 경우
+                                        arrowRotation = Quaternion.Euler(0f, baseAngle + 180f, 0f);
+                                    }
+                                    else {
+                                        // 좌회전인 경우
+                                        arrowRotation = Quaternion.Euler(0f, baseAngle + 270f, 0f);
+                                    }
                                 }
                             }
                             else {
+                                // 종착지 촉 화살표
                                 resourceType = ArrowResourceType.Head;
                                 float angle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
                                 arrowRotation = Quaternion.Euler(0f, angle + 180f, 0f);
