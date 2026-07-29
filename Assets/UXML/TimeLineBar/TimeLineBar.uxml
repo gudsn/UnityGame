@@ -1,5 +1,27 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="TimeLineBarRoot" style="flex-grow: 1; flex-direction: row; align-self: auto; position: absolute; left: 203px; bottom: 10px; translate: -50% 0; background-size: 880px 120px; height: 60px; width: 320px; right: -196px;">
-        <ui:VisualElement style="flex-grow: 1; justify-content: flex-end;"/>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="TimeLineBar.uss" />
+    
+    <ui:VisualElement name="TimelineContainer" class="timeline-bar">
+        
+        <!-- 적군 트랙들이 동적으로 추가될 공간 (위쪽) -->
+        <ui:VisualElement name="enemy-tracks-container" />
+
+        <!-- 플레이어 고정 트랙 (아래쪽) -->
+        <ui:VisualElement name="player-track" class="track-row">
+            <ui:VisualElement class="track-header">
+                <ui:Label text="Player" class="track-header-label"/>
+            </ui:VisualElement>
+            
+            <!-- 8 틱 슬롯 -->
+            <ui:VisualElement name="slot-1" class="track-slot"><ui:Label text="1" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-2" class="track-slot"><ui:Label text="2" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-3" class="track-slot"><ui:Label text="3" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-4" class="track-slot"><ui:Label text="4" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-5" class="track-slot"><ui:Label text="5" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-6" class="track-slot"><ui:Label text="6" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-7" class="track-slot"><ui:Label text="7" class="tick-label"/></ui:VisualElement>
+            <ui:VisualElement name="slot-8" class="track-slot"><ui:Label text="8" class="tick-label"/></ui:VisualElement>
+        </ui:VisualElement>
+
     </ui:VisualElement>
 </ui:UXML>

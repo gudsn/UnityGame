@@ -1,0 +1,59 @@
+/* 타임라인 바를 화면 하단에 고정 */
+.timeline-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    translate: -50% 0; /* 가운데 정렬 */
+    background-color: rgba(25, 25, 30, 0.95);
+    border-width: 2px;
+    border-color: #444450;
+    border-radius: 8px;
+    padding: 10px;
+    align-items: flex-start;
+}
+
+/* 유닛 하나당 할당되는 가로 한 줄 (트랙) */
+.track-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* 유닛 이름/초상화 영역 */
+.track-header {
+    width: 80px;
+    height: 60px;
+    background-color: #33333C;
+    margin-right: 10px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.track-header-label {
+    color: white;
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+
+/* 8개의 틱 슬롯 (이곳에 PlayerInputUI의 박스가 드롭됨) */
+.track-slot {
+    width: 60px;
+    height: 60px;
+    background-color: #1E1E24;
+    border-width: 1px;
+    border-color: #4A4A55;
+    margin-right: 4px;
+    border-radius: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 틱 번호 라벨 */
+.tick-label {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 10px;
+    color: #666677;
+}

@@ -218,13 +218,13 @@ public class PlayerAttackState : ITurnState {
             }
 
             AttackCommand attackCmd = new AttackCommand(activeUnit, targetUnit, currentCordinate);
-            TimeLineManager.Instance.ScheduleAction(activeUnit, attackCmd);
 
-            isAttackConfirmed = true; // 공격 확정 플래그 설정
+            // [핵심 변경] 만들어진 상자에게 어떤 명령인지 데이터를 주입합니다. 
+            if (attackGroupPreview != null) attackGroupPreview.userData = attackCmd;
 
+            isAttackConfirmed = true; 
             EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
             machine.HasReservedAttack = true;
-
             machine.ChangeState(new PlayerIdleState(machine));
         }
     }

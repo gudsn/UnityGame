@@ -113,4 +113,23 @@ public class TimeLineManager : MonoBehaviour {
         timelineQueue.Clear();
         Debug.Log("모든 타임라인 연산 완료.");
     }
+
+    // 특정 슬롯 틱에 강제로 명령을 할당하는 메서드 오버로딩
+    public void ScheduleActionAtTick(Unit unit, ICommand macroCommand, int startTick) {
+        if (unit == null || macroCommand == null) return;
+
+        System.Type cmdType = macroCommand.GetType();
+        if (!schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) {
+            Debug.LogWarning($"[TimeLineManager] 등록되지 않은 명령어 스케줄러입니다: {cmdType.Name}");
+            return;
+        }
+
+        // 스케줄러를 통해 ICommand -> List<TickCommand> 분해 (지정된 startTick부터)
+        List<TickCommand> microTicks = scheduler.Decompose(macroCommand, startTick);
+
+        if (microTicks != null && microTicks.Count > 0) {
+            timelineQueue.AddRange(microTicks);
+            Debug.Log($"<color=cyan>[강제 스케줄링]</color> 유닛: {unit.gameObject.name} | 명령: {cmdType.Name} | 할당 틱: {startTick}");
+        }
+    }
 }

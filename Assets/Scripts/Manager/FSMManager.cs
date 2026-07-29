@@ -33,6 +33,7 @@ public class FSMManager : MonoBehaviour {
         StartNewRound();
     }
 
+    // 새 유닛을 행동 대기열에 추가
     public void EnqueueNewUnit(Unit unit) {
         int currentSpeed = Mathf.Max(1, unit.unitSpeed);
         int speed = actionValue / currentSpeed;
@@ -62,14 +63,13 @@ public class FSMManager : MonoBehaviour {
             }
         }
 
-        // 대기열에 아군이 아예 존재하지 않는다면 첫 요소 시간대를 데드라인으로 설정
         if (nextPlayerTime == -1) {
             nextPlayerTime = unitQueue.GetFirstPriority();
         }
 
         currentTime = unitQueue.GetFirstPriority();
 
-        // 2. 데드라인(다음 아군 턴 시간) 이하에 존재하는 모든 적군과 해당 시간대의 아군을 수집
+        // 2. 데드라인 이하에 존재하는 모든 적군과 해당 시간대의 아군 수집
         while (unitQueue.Count > 0 && unitQueue.GetFirstPriority() <= nextPlayerTime) {
             int elementPriority = unitQueue.GetFirstPriority();
             Unit unit = unitQueue.Dequeue();
@@ -94,8 +94,14 @@ public class FSMManager : MonoBehaviour {
         StartCoroutine(ProcessRoundSequence());
     }
 
+    // 라운드 순차 실행 코루틴
     private IEnumerator ProcessRoundSequence() {
         Debug.Log($"<color=cyan>====== [가변 라운드 오픈 (현재 시간: {currentTime})] ======</color>");
+
+        // [Step 2 추가] 타임라인 UI에 현재 라운드의 적군 트랙을 생성하도록 지시
+        if (TimeLineUI.Instance != null) {
+            TimeLineUI.Instance.BuildEnemyTracks(currentRoundEnemies);
+        }
 
         // PHASE 1: 수집된 모든 적군의 의도를 수립하고 맵에 예고
         if (currentRoundEnemies.Count > 0) {

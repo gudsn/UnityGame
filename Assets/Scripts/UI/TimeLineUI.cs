@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,7 +12,12 @@ public class TimeLineUI : MonoBehaviour {
     [SerializeField] private Sprite attackIcon;
 
     [SerializeField] private UIDocument uiDocument;
+
+    // 기존 플레이어 예약 박스가 생성될 컨테이너
     private VisualElement boxChainContainer;
+
+    // [Step 2 추가] 하단 타임라인의 적군 트랙 컨테이너
+    private VisualElement enemyTracksContainer;
 
     private void Awake() {
         if (Instance == null) Instance = this;
@@ -19,15 +26,73 @@ public class TimeLineUI : MonoBehaviour {
         InitUI();
     }
 
+    // [수정] 기존 UI와 하단 타임라인 UI를 모두 바인딩합니다.
     private void InitUI() {
+        // 1. 기존 시스템용 컨테이너 바인딩
         if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
-        if (uiDocument == null) return;
+        if (uiDocument != null && uiDocument.rootVisualElement != null) {
+            boxChainContainer = uiDocument.rootVisualElement.Q<VisualElement>("box-chain-container");
+        }
 
-        VisualElement root = uiDocument.rootVisualElement;
-        if (root != null) {
-            boxChainContainer = root.Q<VisualElement>("box-chain-container");
+        // 2. [Step 2 추가] UIManager 관할의 하단 타임라인 바 바인딩
+        if (UIManager.Instance != null) {
+            UIDocument uiManagerDoc = UIManager.Instance.GetComponent<UIDocument>();
+            if (uiManagerDoc != null && uiManagerDoc.rootVisualElement != null) {
+                enemyTracksContainer = uiManagerDoc.rootVisualElement.Q<VisualElement>("enemy-tracks-container");
+            }
         }
     }
+
+    // ==========================================================
+    // [Step 2 추가 로직] 적군 트랙 생성 (속도 내림차순 정렬)
+    // ==========================================================
+    public void BuildEnemyTracks(List<Unit> enemies) {
+        if (enemyTracksContainer == null) InitUI();
+        if (enemyTracksContainer == null) return;
+
+        enemyTracksContainer.Clear(); // 이전 라운드 트랙 초기화
+
+        // 속도(unitSpeed) 기준 내림차순 정렬
+        var sortedEnemies = enemies.OrderByDescending(e => e.unitSpeed).ToList();
+
+        foreach (var enemy in sortedEnemies) {
+            VisualElement trackRow = CreateTrackRow(enemy.GetName());
+            enemyTracksContainer.Add(trackRow);
+        }
+    }
+
+    // 가로 한 줄(헤더 + 8틱 슬롯) UI 생성 헬퍼
+    private VisualElement CreateTrackRow(string unitName) {
+        VisualElement row = new VisualElement();
+        row.AddToClassList("track-row");
+
+        // 헤더 (이름)
+        VisualElement header = new VisualElement();
+        header.AddToClassList("track-header");
+        Label nameLabel = new Label(unitName);
+        nameLabel.AddToClassList("track-header-label");
+        header.Add(nameLabel);
+        row.Add(header);
+
+        // 8개의 빈 슬롯
+        for (int i = 1; i <= 8; i++) {
+            VisualElement slot = new VisualElement();
+            slot.name = $"slot-{i}";
+            slot.AddToClassList("track-slot");
+
+            Label tickLabel = new Label(i.ToString());
+            tickLabel.AddToClassList("tick-label");
+            slot.Add(tickLabel);
+
+            row.Add(slot);
+        }
+
+        return row;
+    }
+
+    // ==========================================================
+    // [원본 유지] 아래는 기존 시스템 코드입니다. (변경 사항 없음)
+    // ==========================================================
 
     // 명령 그룹 루프 틀 생성
     public VisualElement CreateCommandGroupUI(string commandType) {
@@ -59,15 +124,11 @@ public class TimeLineUI : MonoBehaviour {
         for (int i = 0; i < tickCount; i++) {
             Sprite targetSprite = null;
 
-            // 이동 명령: 모든 틱에 이동 아이콘 배치
             if (commandType == "MoveCommand") {
                 targetSprite = moveIcon;
             }
-            // 공격 명령: 1틱(대기)은 아이콘 없음(null), 2틱(실제 타격)에만 공격 아이콘 배치
             else if (commandType == "AttackCommand") {
-                if (i > 0) {
-                    targetSprite = attackIcon;
-                }
+                if (i > 0) targetSprite = attackIcon;
             }
 
             VisualElement box = CreateSingleTickBox(targetSprite);
@@ -84,12 +145,10 @@ public class TimeLineUI : MonoBehaviour {
         VisualElement box = new VisualElement();
         box.AddToClassList("box-item");
 
-        // 아이콘 스프라이트가 존재하는 경우에만 Image 요소 추가
         if (iconSprite != null) {
             Image iconImage = new Image();
             iconImage.sprite = iconSprite;
             iconImage.AddToClassList("box-icon");
-
             box.Add(iconImage);
         }
 
