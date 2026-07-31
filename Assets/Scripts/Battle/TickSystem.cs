@@ -2,14 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 틱 실행 우선순위
 public enum CommandPriority {
     Move = 1,
     Buff = 2,
     Attack = 3
 }
 
-// 단일 틱 실행 구조체
 public struct TickCommand {
     public int executeTick;
     public CommandPriority priority;
@@ -17,12 +15,10 @@ public struct TickCommand {
     public IEnumerator actionLogic;
 }
 
-// 틱 분해 스케줄러 인터페이스
 public interface IActionScheduler {
     List<TickCommand> Decompose(ICommand macroCommand, int startTick);
 }
 
-// 이동 스케줄러 (1타일 = 1틱)
 public class MoveScheduler : IActionScheduler {
     public List<TickCommand> Decompose(ICommand macroCommand, int startTick) {
         List<TickCommand> tickCommands = new List<TickCommand>();
@@ -42,7 +38,7 @@ public class MoveScheduler : IActionScheduler {
 
         for (int i = 0; i < path.Count; i++) {
             tickCommands.Add(new TickCommand {
-                executeTick = startTick + i + 1,
+                executeTick = startTick + i,
                 priority = CommandPriority.Move,
                 owner = owner,
                 actionLogic = MoveSingleTileLogic(owner, path[i])
@@ -51,30 +47,72 @@ public class MoveScheduler : IActionScheduler {
         return tickCommands;
     }
 
-    // 1칸 이동 로직 (실시간 동적 충돌 제어)
     private IEnumerator MoveSingleTileLogic(Unit owner, TileData targetTile) {
+        if (targetTile == null || owner == null) yield break;
+
         Vector2Int targetPos = new Vector2Int(targetTile.gridX, targetTile.gridY);
+        TileData startTile = GridSystem.Instance.GetTileData(owner.currentPosition);
 
-        // [현장 충돌 감지] 예약 순서와 무관하게, 이 틱이 발동한 현 시점에 누군가 내 앞 타일에 도달했다면 중단
-        if (UnitManager.Instance.RegisteredUnit.TryGetValue(targetPos, out Unit occupant)) {
-            if (occupant != null && occupant != owner) {
-                Debug.Log($"<color=orange>[이동 중단]</color> {owner.gameObject.name}의 앞길이 {occupant.gameObject.name}에 의해 막혀 제자리에 멈춥니다.");
+        // [이중 길막 검사] 
+        // 1. 타일 데이터 자체의 점유 상태(isOccupied) 확인
+        // 2. RegisteredUnit 사전에 나 이외의 살아있는 유닛이 존재하는지 확인
+        bool isOccupiedInGrid = targetTile.isOccupied && targetPos != owner.currentPosition;
+        bool hasOtherUnit = UnitManager.Instance.RegisteredUnit.TryGetValue(targetPos, out Unit occupant)
+                            && occupant != null && occupant != owner && occupant.GetHealth() > 0;
 
-                // 전방이 막혀 전진이 취소되었으므로 가상 위치를 현재 물리 위치로 돌려놓고 코루틴을 강제 종료합니다.
-                owner.virtualPosition = owner.currentPosition;
-                yield break;
+        if (isOccupiedInGrid || hasOtherUnit) {
+            Debug.Log($"<color=orange>[이동 완전 차단]</color> {owner.gameObject.name}의 앞길이 막혀 이동이 중단되었습니다.");
+
+            // 1. 가상 좌표 및 물리 위치를 출발 타일 정중앙으로 완벽 스냅
+            owner.virtualPosition = owner.currentPosition;
+
+            if (startTile != null) {
+                Vector3 exactTilePos = startTile.worldPosition;
+                exactTilePos.y = owner.transform.position.y;
+                owner.transform.position = exactTilePos;
+
+                // 2. 시선을 직교 사방(동/서/남/북)으로 스냅
+                Vector3 currentForward = owner.transform.forward;
+                Vector3 cardinalForward = (Mathf.Abs(currentForward.x) > Mathf.Abs(currentForward.z))
+                    ? new Vector3(Mathf.Sign(currentForward.x), 0, 0)
+                    : new Vector3(0, 0, Mathf.Sign(currentForward.z));
+
+                if (cardinalForward != Vector3.zero) {
+                    owner.transform.rotation = Quaternion.LookRotation(cardinalForward);
+                }
             }
+
+            // 물리 보간 연산으로 진입하지 않고 즉시 종료
+            yield break;
         }
 
+        // 경로가 완전히 비어있을 때만 실제 3D 이동 처리
         float moveSpeed = 5f;
         Vector3 targetPosition = targetTile.worldPosition;
         targetPosition.y = owner.transform.position.y;
         Vector3 direction = (targetPosition - owner.transform.position).normalized;
         Quaternion targetRotation = owner.transform.rotation;
 
-        if (direction != Vector3.zero) targetRotation = Quaternion.LookRotation(direction);
+        if (direction != Vector3.zero) {
+            Vector3 cardinalDir = (Mathf.Abs(direction.x) > Mathf.Abs(direction.z))
+                ? new Vector3(Mathf.Sign(direction.x), 0, 0)
+                : new Vector3(0, 0, Mathf.Sign(direction.z));
 
-        while (Vector3.Distance(owner.transform.position, targetPosition) > 0.05f) {
+            targetRotation = Quaternion.LookRotation(cardinalDir);
+        }
+
+        while (Vector3.Distance(owner.transform.position, targetPosition) > 0.01f) {
+            // 프레임 이동 도중 동시 이동으로 발생할 수 있는 실시간 충돌 체크
+            if (targetTile.isOccupied || (UnitManager.Instance.RegisteredUnit.TryGetValue(targetPos, out Unit midCheck) && midCheck != null && midCheck != owner && midCheck.GetHealth() > 0)) {
+                if (startTile != null) {
+                    Vector3 resetPos = startTile.worldPosition;
+                    resetPos.y = owner.transform.position.y;
+                    owner.transform.position = resetPos;
+                }
+                owner.virtualPosition = owner.currentPosition;
+                yield break;
+            }
+
             owner.transform.rotation = Quaternion.Slerp(owner.transform.rotation, targetRotation, Time.deltaTime * 15f);
             owner.transform.position = Vector3.MoveTowards(owner.transform.position, targetPosition, moveSpeed * Time.deltaTime);
             yield return null;
@@ -83,12 +121,11 @@ public class MoveScheduler : IActionScheduler {
         owner.transform.position = targetPosition;
         owner.transform.rotation = targetRotation;
 
-        // 한 칸 진입에 도달한 시점에 즉시 실제 데이터를 갱신합니다.
+        // 이동 완료 후 데이터 및 타일 점유 정보 갱신
         UnitManager.Instance.MoveUnit(targetPos, owner);
     }
 }
 
-// 공격 스케줄러 (진영 유연 판정 및 사거리 내 실시간 모색 방식)
 public class AttackScheduler : IActionScheduler {
     public List<TickCommand> Decompose(ICommand macroCommand, int startTick) {
         List<TickCommand> tickCommands = new List<TickCommand>();
@@ -96,17 +133,15 @@ public class AttackScheduler : IActionScheduler {
 
         if (attackCmd == null) return tickCommands;
 
-        // 1틱: 공격 전 대기 선딜레이
         tickCommands.Add(new TickCommand {
-            executeTick = startTick + 1,
+            executeTick = startTick,
             priority = CommandPriority.Move,
             owner = attackCmd.owner,
-            actionLogic = WaitLogic(0.5f)
+            actionLogic = null
         });
 
-        // 2틱: 실제 타격 연산 (실행되는 시점에 범위 내 상대 진영 유닛을 타겟팅)
         tickCommands.Add(new TickCommand {
-            executeTick = startTick + 2,
+            executeTick = startTick + 1,
             priority = CommandPriority.Attack,
             owner = attackCmd.owner,
             actionLogic = AttackLogic(attackCmd.owner, attackCmd.targetCoordinate)
@@ -115,52 +150,59 @@ public class AttackScheduler : IActionScheduler {
         return tickCommands;
     }
 
-    private IEnumerator WaitLogic(float waitTime) {
-        yield return new WaitForSeconds(waitTime);
+    private bool IsWithinCrossRange(Vector2Int origin, Vector2Int target, int maxRange) {
+        int dx = Mathf.Abs(origin.x - target.x);
+        int dy = Mathf.Abs(origin.y - target.y);
+
+        return (dx == 0 && dy <= maxRange) || (dy == 0 && dx <= maxRange);
     }
 
-    // [수정 완료] 진영 판정을 동적으로 변경하고 조준 타일을 최우선 탐색
     private IEnumerator AttackLogic(Unit owner, Vector2Int intendedTargetCoord) {
-        int attackRange = 2; // 맨해튼 거리 2칸
+        int attackRange = 2;
         Unit finalTargetUnit = null;
 
-        // 1. 공격 주체(owner)의 상대 진영(Opposing Faction) 결정
         Faction targetFaction = (owner.unitFaction == Faction.Player) ? Faction.Enemy : Faction.Player;
+        Vector2Int ownerPos = owner.currentPosition;
 
-        // 2. 예약 당시 조준했던 타일(intendedTargetCoord)에 적이 존재하는지 1차 확인
         if (UnitManager.Instance.RegisteredUnit.TryGetValue(intendedTargetCoord, out Unit originalTarget)) {
             if (originalTarget != null && originalTarget.unitFaction == targetFaction && originalTarget.GetHealth() > 0) {
-                int dist = GridSystem.Instance.GetManhattanDistance(owner.currentPosition, originalTarget.currentPosition);
-                if (dist <= attackRange) {
+                if (IsWithinCrossRange(ownerPos, originalTarget.currentPosition, attackRange)) {
                     finalTargetUnit = originalTarget;
                 }
             }
         }
 
-        // 3. 조준했던 적이 없거나 범위를 벗어났다면, 사거리(맨해튼 2칸) 내의 다른 적 유닛 탐색
         if (finalTargetUnit == null) {
             foreach (var kvp in UnitManager.Instance.RegisteredUnit) {
                 Unit candidate = kvp.Value;
                 if (candidate == null || candidate.unitFaction != targetFaction || candidate.GetHealth() <= 0) continue;
 
-                int distance = GridSystem.Instance.GetManhattanDistance(owner.currentPosition, candidate.currentPosition);
-                if (distance <= attackRange) {
+                if (IsWithinCrossRange(ownerPos, candidate.currentPosition, attackRange)) {
                     finalTargetUnit = candidate;
                     break;
                 }
             }
         }
 
-        // 4. 사거리 내에 적 유닛이 하나도 존재하지 않는다면 공격 불발(헛방) 처리
         if (finalTargetUnit == null) {
-            Debug.Log($"<color=yellow>[공격 실패]</color> {owner.gameObject.name}의 사거리(맨해튼 {attackRange}칸) 내에 타깃({targetFaction})이 존재하지 않아 허공을 가릅니다.");
+            Debug.Log($"<color=yellow>[공격 실패]</color> {owner.gameObject.name}의 현재 위치 기준 사거리 내에 타깃이 존재하지 않습니다.");
             yield break;
         }
 
-        // 5. 타겟 방향을 바라보고 공격 이벤트 발생
-        Vector3 lookTarget = finalTargetUnit.transform.position;
-        lookTarget.y = owner.transform.position.y;
-        owner.transform.LookAt(lookTarget);
+        Vector3 rawDir = (finalTargetUnit.transform.position - owner.transform.position);
+        rawDir.y = 0;
+
+        if (rawDir != Vector3.zero) {
+            Vector3 cardinalDir;
+            if (Mathf.Abs(rawDir.x) > Mathf.Abs(rawDir.z)) {
+                cardinalDir = new Vector3(Mathf.Sign(rawDir.x), 0, 0);
+            }
+            else {
+                cardinalDir = new Vector3(0, 0, Mathf.Sign(rawDir.z));
+            }
+
+            owner.transform.rotation = Quaternion.LookRotation(cardinalDir);
+        }
 
         Vector2Int hitCoordinate = finalTargetUnit.currentPosition;
         owner.Attack(hitCoordinate);
@@ -168,7 +210,6 @@ public class AttackScheduler : IActionScheduler {
     }
 }
 
-// 대기 스케줄러
 public class WaitScheduler : IActionScheduler {
     public List<TickCommand> Decompose(ICommand macroCommand, int startTick) {
         WaitCommand waitCmd = macroCommand as WaitCommand;
@@ -176,7 +217,7 @@ public class WaitScheduler : IActionScheduler {
 
         return new List<TickCommand> {
             new TickCommand {
-                executeTick = startTick + 1,
+                executeTick = startTick,
                 priority = CommandPriority.Move,
                 owner = null,
                 actionLogic = WaitLogic(waitCmd.waitTime)

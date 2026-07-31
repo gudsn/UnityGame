@@ -7,17 +7,18 @@ using UnityEngine.UIElements;
 public class TimeLineUI : MonoBehaviour {
     public static TimeLineUI Instance { get; private set; }
 
-    [Header("UI 아이콘 에셋 (Sprite Single 모드)")]
+    [Header("UI 아이콘 에셋 (인스펙터 직접 할당)")]
     [SerializeField] private Sprite moveIcon;
     [SerializeField] private Sprite attackIcon;
 
+    public Sprite MoveIcon => moveIcon;
+    public Sprite AttackIcon => attackIcon;
+
     [SerializeField] private UIDocument uiDocument;
 
-    // 기존 플레이어 예약 박스가 생성될 컨테이너
     private VisualElement boxChainContainer;
-
-    // [Step 2 추가] 하단 타임라인의 적군 트랙 컨테이너
     private VisualElement enemyTracksContainer;
+    public VisualElement PlayerTrack { get; private set; }
 
     private void Awake() {
         if (Instance == null) Instance = this;
@@ -26,33 +27,27 @@ public class TimeLineUI : MonoBehaviour {
         InitUI();
     }
 
-    // [수정] 기존 UI와 하단 타임라인 UI를 모두 바인딩합니다.
     private void InitUI() {
-        // 1. 기존 시스템용 컨테이너 바인딩
         if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
         if (uiDocument != null && uiDocument.rootVisualElement != null) {
             boxChainContainer = uiDocument.rootVisualElement.Q<VisualElement>("box-chain-container");
         }
 
-        // 2. [Step 2 추가] UIManager 관할의 하단 타임라인 바 바인딩
         if (UIManager.Instance != null) {
             UIDocument uiManagerDoc = UIManager.Instance.GetComponent<UIDocument>();
             if (uiManagerDoc != null && uiManagerDoc.rootVisualElement != null) {
                 enemyTracksContainer = uiManagerDoc.rootVisualElement.Q<VisualElement>("enemy-tracks-container");
+                PlayerTrack = uiManagerDoc.rootVisualElement.Q<VisualElement>("player-track");
             }
         }
     }
 
-    // ==========================================================
-    // [Step 2 추가 로직] 적군 트랙 생성 (속도 내림차순 정렬)
-    // ==========================================================
     public void BuildEnemyTracks(List<Unit> enemies) {
         if (enemyTracksContainer == null) InitUI();
         if (enemyTracksContainer == null) return;
 
-        enemyTracksContainer.Clear(); // 이전 라운드 트랙 초기화
+        enemyTracksContainer.Clear();
 
-        // 속도(unitSpeed) 기준 내림차순 정렬
         var sortedEnemies = enemies.OrderByDescending(e => e.unitSpeed).ToList();
 
         foreach (var enemy in sortedEnemies) {
@@ -61,12 +56,10 @@ public class TimeLineUI : MonoBehaviour {
         }
     }
 
-    // 가로 한 줄(헤더 + 8틱 슬롯) UI 생성 헬퍼
     private VisualElement CreateTrackRow(string unitName) {
         VisualElement row = new VisualElement();
         row.AddToClassList("track-row");
 
-        // 헤더 (이름)
         VisualElement header = new VisualElement();
         header.AddToClassList("track-header");
         Label nameLabel = new Label(unitName);
@@ -74,7 +67,6 @@ public class TimeLineUI : MonoBehaviour {
         header.Add(nameLabel);
         row.Add(header);
 
-        // 8개의 빈 슬롯
         for (int i = 1; i <= 8; i++) {
             VisualElement slot = new VisualElement();
             slot.name = $"slot-{i}";
@@ -90,11 +82,64 @@ public class TimeLineUI : MonoBehaviour {
         return row;
     }
 
-    // ==========================================================
-    // [원본 유지] 아래는 기존 시스템 코드입니다. (변경 사항 없음)
-    // ==========================================================
+    public void ClearEnemyTrackSlots() {
+        if (enemyTracksContainer == null) return;
+        foreach (var row in enemyTracksContainer.Query<VisualElement>(className: "track-row").ToList()) {
+            for (int i = 1; i <= 8; i++) {
+                VisualElement slot = row.Q<VisualElement>($"slot-{i}");
+                if (slot != null) {
+                    var boxes = slot.Query<VisualElement>(className: "box-item").ToList();
+                    foreach (var box in boxes) {
+                        box.RemoveFromHierarchy();
+                    }
+                }
+            }
+        }
+    }
 
-    // 명령 그룹 루프 틀 생성
+    // [추가] 플레이어 타임라인 슬롯(1~8)에 남아있는 예약 박스들을 일괄 제거
+    public void ClearPlayerTrackSlots() {
+        if (PlayerTrack == null) InitUI();
+        if (PlayerTrack == null) return;
+
+        for (int i = 1; i <= 8; i++) {
+            VisualElement slot = PlayerTrack.Q<VisualElement>($"slot-{i}");
+            if (slot != null) {
+                var boxes = slot.Query<VisualElement>(className: "box-item").ToList();
+                foreach (var box in boxes) {
+                    box.RemoveFromHierarchy();
+                }
+            }
+        }
+    }
+
+    public void PlaceEnemyActionIntoSlot(string unitName, int tickIndex, string commandType) {
+        if (enemyTracksContainer == null) InitUI();
+        if (enemyTracksContainer == null) return;
+
+        foreach (var row in enemyTracksContainer.Query<VisualElement>(className: "track-row").ToList()) {
+            Label nameLabel = row.Q<Label>(className: "track-header-label");
+            if (nameLabel != null && nameLabel.text == unitName) {
+                VisualElement slot = row.Q<VisualElement>($"slot-{tickIndex}");
+                if (slot != null) {
+                    VisualElement actionBox = new VisualElement();
+                    actionBox.AddToClassList("box-item");
+
+                    Sprite targetSprite = (commandType == "MoveCommand") ? moveIcon : attackIcon;
+                    if (targetSprite != null) {
+                        Image iconImage = new Image();
+                        iconImage.sprite = targetSprite;
+                        iconImage.AddToClassList("box-icon");
+                        actionBox.Add(iconImage);
+                    }
+
+                    slot.Add(actionBox);
+                }
+                break;
+            }
+        }
+    }
+
     public VisualElement CreateCommandGroupUI(string commandType) {
         if (boxChainContainer == null) InitUI();
 
@@ -112,7 +157,6 @@ public class TimeLineUI : MonoBehaviour {
         return groupRoot;
     }
 
-    // 틱 단위 박스 생성 및 아이콘/빈 박스 데이터 세팅
     public void PopulateTickBoxes(VisualElement groupElement, string commandType, int tickCount) {
         if (groupElement == null) return;
 
@@ -140,7 +184,6 @@ public class TimeLineUI : MonoBehaviour {
         }
     }
 
-    // USS 클래스를 입혀 단일 박스 생성 (스타일은 USS에서 통제)
     private VisualElement CreateSingleTickBox(Sprite iconSprite) {
         VisualElement box = new VisualElement();
         box.AddToClassList("box-item");
@@ -161,8 +204,11 @@ public class TimeLineUI : MonoBehaviour {
         return divider;
     }
 
-    // 모든 UI 박스 제거
     public void ClearAll() {
         boxChainContainer?.Clear();
+        ClearPlayerTrackSlots(); // 라운드 종료 시 플레이어 타임라인 슬롯도 함께 초기화
+        if (enemyTracksContainer != null) {
+            enemyTracksContainer.Clear();
+        }
     }
 }

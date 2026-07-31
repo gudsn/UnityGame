@@ -13,9 +13,8 @@ public class PlayerMoveState : ITurnState {
     private int moveRange;
     private HashSet<TileData> validMoveTiles;
 
-    // UI 박스 그룹 참조 보관용
     private VisualElement moveGroupPreview;
-    private bool isMoveConfirmed = false; // 이동 확정 여부 플래그
+    private bool isMoveConfirmed = false;
 
     public PlayerMoveState(PlayerFSM machine) {
         this.machine = machine;
@@ -26,7 +25,6 @@ public class PlayerMoveState : ITurnState {
         moveRange = activeUnit.GetMoveRange();
         Debug.Log("[이동 페이즈] 이동할 타일을 클릭한 후 Enter 키를 눌러 예약하세요.");
 
-        // 1. Move 상태 진입 시 최대 이동 범위만큼 UI 틱 박스 그룹 프리뷰 생성
         if (PlayerInputUI.Instance != null) {
             moveGroupPreview = PlayerInputUI.Instance.CreateMovePreviewGroup(moveRange);
         }
@@ -46,7 +44,6 @@ public class PlayerMoveState : ITurnState {
         PlayerInput.Instance.OnEnterTriggered -= HandleConfirmMove;
         PlayerInput.Instance.OnLeftMouseClicked -= HandleIntendedMove;
 
-        // 행동을 확정하지 않고 이탈 시 프리뷰 UI 박스 제거
         if (!isMoveConfirmed && moveGroupPreview != null) {
             moveGroupPreview.RemoveFromHierarchy();
             moveGroupPreview = null;
@@ -93,14 +90,13 @@ public class PlayerMoveState : ITurnState {
 
         PlayerMoveCommand playerMoveCmd = new PlayerMoveCommand(activeUnit, targetTile);
 
-        // 2. 이동 확정 시 실제 A* 경로 타일 수만큼 UI 틱 박스 수 조정
         if (PlayerInputUI.Instance != null && playerMoveCmd.path != null) {
             PlayerInputUI.Instance.UpdateMoveGroupTicks(moveGroupPreview, playerMoveCmd.path.Count);
+
+            if (moveGroupPreview != null) moveGroupPreview.userData = playerMoveCmd;
         }
 
-        isMoveConfirmed = true; // 이동 확정 플래그 설정
-
-        TimeLineManager.Instance.ScheduleAction(activeUnit, playerMoveCmd);
+        isMoveConfirmed = true;
 
         activeUnit.virtualPosition = new Vector2Int(targetTile.gridX, targetTile.gridY);
 

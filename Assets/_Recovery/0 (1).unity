@@ -649,8 +649,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2045348135}
   - component: {fileID: 2045348134}
-  - component: {fileID: 2045348133}
   - component: {fileID: 2045348136}
+  - component: {fileID: 2045348137}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -658,18 +658,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2045348133
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2045348132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2f97f47ea1b78624498e81d2d029935d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputUI
 --- !u!114 &2045348134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -723,6 +711,18 @@ MonoBehaviour:
   moveIcon: {fileID: 21300000, guid: 9d9bc050ef1559b4496a176657960b06, type: 3}
   attackIcon: {fileID: 21300000, guid: 577659c55ddd8b040b95e6da38295e8b, type: 3}
   uiDocument: {fileID: 0}
+--- !u!114 &2045348137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2045348132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04e355050a4055c48b29a770bfc985f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputUI
 --- !u!1 &2064665775
 GameObject:
   m_ObjectHideFlags: 0

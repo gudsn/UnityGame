@@ -16,9 +16,8 @@ public class PlayerAttackState : ITurnState {
 
     private Dictionary<Unit, GameObject> previewGhostPool = new Dictionary<Unit, GameObject>();
 
-    // UI 박스 그룹 참조 보관용
     private VisualElement attackGroupPreview;
-    private bool isAttackConfirmed = false; // 공격 확정 여부 플래그
+    private bool isAttackConfirmed = false;
 
     public PlayerAttackState(PlayerFSM machine) {
         this.machine = machine;
@@ -28,7 +27,6 @@ public class PlayerAttackState : ITurnState {
     public void Enter() {
         Debug.Log("[공격 페이즈] 사거리 내의 적을 클릭하여 공격을 예약하세요.");
 
-        // 1. Attack 상태 진입 시 2틱(준비+공격) UI 박스 그룹 생성
         if (PlayerInputUI.Instance != null) {
             attackGroupPreview = PlayerInputUI.Instance.CreateAttackGroup();
         }
@@ -66,7 +64,6 @@ public class PlayerAttackState : ITurnState {
     }
 
     public void Exit() {
-        // 공격을 확정하지 않고 이탈 시 프리뷰 UI 박스 제거
         if (!isAttackConfirmed && attackGroupPreview != null) {
             attackGroupPreview.RemoveFromHierarchy();
             attackGroupPreview = null;
@@ -160,7 +157,6 @@ public class PlayerAttackState : ITurnState {
             if (enemyTileAtAttackMoment.gridX == targetCoord.x && enemyTileAtAttackMoment.gridY == targetCoord.y) {
                 if (previewGhostPool.TryGetValue(enemy, out GameObject ghost)) {
                     Vector3 spawnPos = enemyTileAtAttackMoment.worldPosition;
-                    spawnPos.y += 0.5f;
 
                     ghost.transform.position = spawnPos;
                     ghost.SetActive(true);
@@ -219,10 +215,9 @@ public class PlayerAttackState : ITurnState {
 
             AttackCommand attackCmd = new AttackCommand(activeUnit, targetUnit, currentCordinate);
 
-            // [핵심 변경] 만들어진 상자에게 어떤 명령인지 데이터를 주입합니다. 
             if (attackGroupPreview != null) attackGroupPreview.userData = attackCmd;
 
-            isAttackConfirmed = true; 
+            isAttackConfirmed = true;
             EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
             machine.HasReservedAttack = true;
             machine.ChangeState(new PlayerIdleState(machine));

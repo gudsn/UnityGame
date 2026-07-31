@@ -1,21 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// 적의 턴 행동 기획(의도) 수립 및 맵 타일 시각화 예고 시스템
 public class EnemyController : MonoBehaviour {
 
     [Header("하이라이트 설정")]
     [SerializeField] private HighlightType enemyMoveHighlightType = HighlightType.Move;
     [SerializeField] private HighlightType enemyAttackHighlightType = HighlightType.Attack;
 
-    [Header("의존성 컴포넌트")]
+    [Header("오브젝트 풀")]
     [SerializeField] private HighlightTilePool tilePool;
 
     private Dictionary<Unit, AIDecision> cachedEnemyDecisions = new Dictionary<Unit, AIDecision>();
 
     public Dictionary<Unit, AIDecision> CachedEnemyDecisions => cachedEnemyDecisions;
 
-    // 특정 미래 틱 시점에 해당 적 유닛이 밟고 서 있을 타일을 경로 데이터 상에서 역산
     public TileData GetEnemyTileAtTick(Unit enemyUnit, int targetTick) {
         if (!cachedEnemyDecisions.TryGetValue(enemyUnit, out AIDecision decision)) {
             return GridSystem.Instance.GetTileData(enemyUnit.currentPosition);
@@ -45,7 +43,6 @@ public class EnemyController : MonoBehaviour {
         }
     }
 
-    // 모든 적의 행동 궤적 연산 후 위협 지역 및 화살표 가이드 장판을 맵에 시각화
     public void DisplayAllEnemyIntents() {
         GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
         cachedEnemyDecisions.Clear();
@@ -69,11 +66,9 @@ public class EnemyController : MonoBehaviour {
             cachedEnemyDecisions[currentUnit] = decision;
         }
 
-        // 캐싱된 결정을 바탕으로 시각화 수행
         RedrawCurrentEnemyIntents();
     }
 
-    // 캐싱된 적 의도(이동 화살표 및 공격 범위를 맵에 표시)
     public void RedrawCurrentEnemyIntents() {
         GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
 
@@ -83,23 +78,31 @@ public class EnemyController : MonoBehaviour {
             tilePool.ReturnArrowTiles(ArrowResourceType.Head);
         }
 
+        // [추가] 적 의도를 다시 그리기 전, 타임라인 UI의 적군 슬롯들에 기존에 들어있던 아이콘들을 먼저 클리어
+        if (TimeLineUI.Instance != null) {
+            TimeLineUI.Instance.ClearEnemyTrackSlots();
+        }
+
         foreach (var kvp in cachedEnemyDecisions) {
             Unit currentUnit = kvp.Key;
             AIDecision decision = kvp.Value;
 
             if (currentUnit == null || currentUnit.GetHealth() <= 0 || decision == null) continue;
 
+            string unitName = currentUnit.GetName();
+            int tickCounter = 1;
+
             foreach (ICommand cmd in decision.intendedCommands) {
-                // 이동 명령 처리: 이동 타일 하이라이트는 생략하고 화살표만 생성
                 if (cmd is MoveCommand moveCmd) {
                     List<TileData> path = moveCmd.path;
-                    if (path != null && path.Count > 0 && tilePool != null) {
-                        TileData startTile = GridSystem.Instance.GetTileData(currentUnit.currentPosition);
-
+                    if (path != null && path.Count > 0) {
                         for (int i = 0; i < path.Count; i++) {
-                            TileData currentTile = path[i];
+                            if (TimeLineUI.Instance != null) {
+                                TimeLineUI.Instance.PlaceEnemyActionIntoSlot(unitName, tickCounter, "MoveCommand");
+                            }
 
-                            TileData prevTile = (i == 0) ? startTile : path[i - 1];
+                            TileData currentTile = path[i];
+                            TileData prevTile = (i == 0) ? GridSystem.Instance.GetTileData(currentUnit.currentPosition) : path[i - 1];
                             TileData nextTile = (i == path.Count - 1) ? null : path[i + 1];
 
                             Vector3 inDir = (currentTile.worldPosition - prevTile.worldPosition).normalized;
@@ -108,46 +111,41 @@ public class EnemyController : MonoBehaviour {
 
                             if (nextTile != null) {
                                 Vector3 outDir = (nextTile.worldPosition - currentTile.worldPosition).normalized;
-
-                                // 직선 구간 (inDir와 outDir의 방향이 같음)
                                 if (Vector3.Dot(inDir, outDir) > 0.9f) {
                                     resourceType = ArrowResourceType.Line;
                                     float angle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
                                     arrowRotation = Quaternion.Euler(0f, angle + 180f, 0f);
                                 }
-                                // 모퉁이 구간 (90도 꺾임)
                                 else {
                                     resourceType = ArrowResourceType.Corner;
-
-                                    // 들어오는 방향 기준 기본 각도
                                     float baseAngle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
-
-                                    // 외적(Cross Product)으로 좌/우 회전 방향 판별
                                     float crossY = Vector3.Cross(inDir, outDir).y;
-
                                     if (crossY > 0f) {
-                                        // 우회전인 경우
                                         arrowRotation = Quaternion.Euler(0f, baseAngle + 180f, 0f);
                                     }
                                     else {
-                                        // 좌회전인 경우
                                         arrowRotation = Quaternion.Euler(0f, baseAngle + 270f, 0f);
                                     }
                                 }
                             }
                             else {
-                                // 종착지 촉 화살표
                                 resourceType = ArrowResourceType.Head;
                                 float angle = Mathf.Atan2(inDir.x, inDir.z) * Mathf.Rad2Deg;
                                 arrowRotation = Quaternion.Euler(0f, angle + 180f, 0f);
                             }
 
                             tilePool.SpawnArrowSprite(currentTile.worldPosition, arrowRotation, resourceType);
+                            tickCounter++;
                         }
                     }
                 }
-                // 공격 명령 처리: 이동 완료 후 예상 위치 기준 공격 범위 표시
-                if (cmd is AttackCommand) {
+                else if (cmd is AttackCommand) {
+                    tickCounter++;
+                    if (TimeLineUI.Instance != null) {
+                        TimeLineUI.Instance.PlaceEnemyActionIntoSlot(unitName, tickCounter, "AttackCommand");
+                    }
+                    tickCounter++;
+
                     Vector2Int expectedPos = currentUnit.currentPosition;
                     foreach (var c in decision.intendedCommands) {
                         if (c is MoveCommand m) {
@@ -160,7 +158,6 @@ public class EnemyController : MonoBehaviour {
         }
     }
 
-    // 라운드 준비가 마감되면 적의 예고 행동들을 타임라인 스케줄러에 순차 커밋
     public void CommitEnemyActionsToTimeline() {
         foreach (var kvp in cachedEnemyDecisions) {
             Unit enemyUnit = kvp.Key;
@@ -178,7 +175,6 @@ public class EnemyController : MonoBehaviour {
         cachedEnemyDecisions.Clear();
     }
 
-    // 다음 라운드 진입 전 바닥 장판 가이드 및 화살표 시스템 일괄 수거
     public void ClearAllEnemyIntents() {
         GridSystem.Instance.ClearEnemyIntents(enemyMoveHighlightType, enemyAttackHighlightType);
 

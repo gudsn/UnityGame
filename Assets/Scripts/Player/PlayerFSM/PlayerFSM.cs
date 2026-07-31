@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerFSM : MonoBehaviour {
     private ITurnState currentState;
 
-    // FSMManager가 플레이어의 조작 완료 여부(null 여부)를 확인할 수 있도록 프로퍼티 개방
+    // FSMManager가 플레이어 조작 완료 여부를 확인할 수 있도록 프로퍼티 개방
     public ITurnState CurrentState => currentState;
 
     public Unit activeUnit { get; private set; }
@@ -42,7 +42,7 @@ public class PlayerFSM : MonoBehaviour {
 
     private void OnUIActionNext(UIActionNextEvent evt) {
         if (activeUnit != null) {
-            UnitEnd(); // 오직 UI 상에서 Next 버튼을 눌렀을 때만 전체 예약을 닫고 마감합니다.
+            UnitEnd(); // UI 상에서 Next 버튼을 눌렀을 때만 예약을 닫고 마감
         }
     }
 
@@ -55,18 +55,27 @@ public class PlayerFSM : MonoBehaviour {
     public void StartTurnfor(Unit currentUnit) {
         this.activeUnit = currentUnit;
 
-        // 새로운 유닛 조작 시 행동 제어 플래그 초기화
+        // 턴 시작 시 가상 좌표를 실제 물리 좌표와 강제 동기화
+        if (activeUnit != null) {
+            activeUnit.virtualPosition = activeUnit.currentPosition;
+        }
+
         HasReservedMove = false;
         HasReservedAttack = false;
 
         EventBus<ShowPlayerActionsEvent>.Publish(new ShowPlayerActionsEvent());
 
-        // [중요] 시작 시 null이 아닌 Idle 상태를 강제 부여하여 FSMManager가 즉시 패스하는 현상을 방어합니다.
+        // 시작 시 Idle 상태를 부여하여 FSMManager 코루틴 방어
         ChangeState(new PlayerIdleState(this));
     }
 
     public void UnitEnd() {
-        // 모든 예약을 끝마쳤으므로 상태를 null로 전환하여 FSMManager의 코루틴 락을 풀어줍니다.
+        // [핵심 보완] 타임라인 슬롯에 이동 박스를 최종 드롭하지 않은 채 턴을 넘긴 경우
+        // 임시로 변경되었던 virtualPosition을 원래 물리 좌표로 완전 원복
+        if (activeUnit != null && !HasReservedMove) {
+            activeUnit.virtualPosition = activeUnit.currentPosition;
+        }
+
         ChangeState(null);
         EventBus<HidePlayerActionsEvent>.Publish(new HidePlayerActionsEvent());
     }

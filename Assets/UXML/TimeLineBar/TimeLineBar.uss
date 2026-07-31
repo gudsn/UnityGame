@@ -57,3 +57,11 @@
     font-size: 10px;
     color: #666677;
 }
+
+/* 틱 실행 직전 아이콘 펄스(확대/축소) 애니메이션 효과 */
+.box-item.is-executing {
+    scale: 1.25;
+    transition-property: scale;
+    transition-duration: 0.4s; 
+    transition-timing-function: ease-out-sine;
+}
