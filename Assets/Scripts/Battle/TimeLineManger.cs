@@ -15,7 +15,6 @@ public class TimeLineManager : MonoBehaviour {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        // 명령어별 스케줄러 등록
         schedulers = new Dictionary<Type, IActionScheduler> {
             { typeof(WaitCommand), new WaitScheduler() },
             { typeof(MoveCommand), new MoveScheduler() },
@@ -24,38 +23,29 @@ public class TimeLineManager : MonoBehaviour {
         };
     }
 
+    // 특정 유닛의 해당 틱 구간 중복 예약 검증
+    public bool HasUnitReservedInTickRange(Unit unit, int startTick, int tickCount) {
+        if (unit == null || timelineQueue.Count == 0) return false;
+
+        int endTick = startTick + tickCount - 1;
+        return timelineQueue.Any(cmd => cmd.owner == unit && cmd.executeTick >= startTick && cmd.executeTick <= endTick);
+    }
+
     public void ScheduleAction(Unit unit, ICommand macroCommand) {
         if (unit == null || macroCommand == null) return;
 
         Type cmdType = macroCommand.GetType();
-        if (!schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) {
-            Debug.LogWarning($"[TimeLineManager] 등록되지 않은 명령어 스케줄러입니다: {cmdType.Name}");
-            return;
-        }
+        if (!schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) return;
 
-        int startTick = 0;
+        int startTick = 1;
         var ownerCommands = timelineQueue.Where(cmd => cmd.owner == unit).ToList();
-
         if (ownerCommands.Count > 0) {
-            int lastTick = ownerCommands.Max(cmd => cmd.executeTick);
-            startTick = lastTick + 1;
-        }
-        else {
-            startTick = 1;
+            startTick = ownerCommands.Max(cmd => cmd.executeTick) + 1;
         }
 
         List<TickCommand> microTicks = scheduler.Decompose(macroCommand, startTick);
-
         if (microTicks != null && microTicks.Count > 0) {
             timelineQueue.AddRange(microTicks);
-        }
-    }
-
-    public void ScheduleAction(Unit unit, AIDecision decision) {
-        if (decision == null || decision.intendedCommands == null) return;
-
-        foreach (var command in decision.intendedCommands) {
-            ScheduleAction(unit, command);
         }
     }
 
@@ -63,36 +53,30 @@ public class TimeLineManager : MonoBehaviour {
         if (unit == null || macroCommand == null) return;
 
         Type cmdType = macroCommand.GetType();
-        if (!schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) {
-            Debug.LogWarning($"[TimeLineManager] 등록되지 않은 명령어 스케줄러입니다: {cmdType.Name}");
-            return;
-        }
+        if (!schedulers.TryGetValue(cmdType, out IActionScheduler scheduler)) return;
 
         List<TickCommand> microTicks = scheduler.Decompose(macroCommand, startTick);
-
         if (microTicks != null && microTicks.Count > 0) {
             timelineQueue.AddRange(microTicks);
         }
     }
 
-    // hitTick보다 '이전'에 완결되는 이동 명령만 추적하여 미래 위치 계산
-    public MoveCommand GetScheduledMoveCommandAtTick(Unit unit, int hitTick) {
-        if (unit == null || timelineQueue.Count == 0) return null;
+    public void CancelMacroCommand(Unit unit, ICommand macroCommand) {
+        if (unit == null || macroCommand == null || timelineQueue.Count == 0) return;
 
-        var lastMoveTick = timelineQueue
-            .Where(cmd => cmd.owner == unit && cmd.executeTick < hitTick && cmd.priority == CommandPriority.Move)
-            .OrderByDescending(cmd => cmd.executeTick)
-            .FirstOrDefault();
+        CommandPriority priority = (macroCommand is AttackCommand) ? CommandPriority.Attack : CommandPriority.Move;
+        int removed = timelineQueue.RemoveAll(cmd => cmd.owner == unit && cmd.priority == priority);
+        Debug.Log($"<color=orange>[타임라인 취소]</color> {unit.GetName()}의 틱 명령 {removed}개 삭제됨");
+    }
 
-        if (lastMoveTick.owner == null) return null;
+    public void CancelRemainingCommands(Unit unit, CommandPriority priorityToCancel) {
+        if (unit == null || timelineQueue.Count == 0) return;
+        timelineQueue.RemoveAll(cmd => cmd.owner == unit && cmd.priority == priorityToCancel);
+    }
 
-        var scheduledMove = timelineQueue
-            .Where(cmd => cmd.owner == unit && cmd.executeTick < hitTick)
-            .Select(cmd => cmd.actionLogic)
-            .OfType<MoveCommand>()
-            .FirstOrDefault();
-
-        return scheduledMove;
+    // 💡 [핵심] 새 라운드 시작 시 대기열 완벽 초기화
+    public void ClearQueue() {
+        timelineQueue.Clear();
     }
 
     public IEnumerator RunTickEngine() {
@@ -101,10 +85,7 @@ public class TimeLineManager : MonoBehaviour {
             .ThenBy(cmd => cmd.priority)
             .ToList();
 
-        if (timelineQueue.Count == 0) {
-            Debug.Log("타임라인 대기열이 비어있어 엔진을 구동하지 않습니다.");
-            yield break;
-        }
+        if (timelineQueue.Count == 0) yield break;
 
         int currentTick = timelineQueue[0].executeTick;
         List<Coroutine> activeCoroutines = new List<Coroutine>();
@@ -121,9 +102,7 @@ public class TimeLineManager : MonoBehaviour {
             }
 
             timelineQueue.RemoveAt(0);
-
-            // 틱 UI 연출 동기화
-            yield return StartCoroutine(TriggerTickVisualEffectRoutine(currentCmd.owner, currentCmd.executeTick));
+            yield return StartCoroutine(TriggerTickVisualEffectRoutine(currentCmd.executeTick));
 
             if (currentCmd.actionLogic != null) {
                 activeCoroutines.Add(StartCoroutine(currentCmd.actionLogic));
@@ -132,45 +111,25 @@ public class TimeLineManager : MonoBehaviour {
 
         foreach (var coroutine in activeCoroutines) yield return coroutine;
 
+        // 💡 틱 실행 완료 후 잔여 큐 확실히 비우기
         timelineQueue.Clear();
     }
 
-    private IEnumerator TriggerTickVisualEffectRoutine(Unit owner, int tickIndex) {
-        if (UIManager.Instance == null || owner == null) yield break;
+    private IEnumerator TriggerTickVisualEffectRoutine(int tickIndex) {
+        if (TimeLineUI.Instance == null) yield break;
 
-        UIDocument uiManagerDoc = UIManager.Instance.GetComponent<UIDocument>();
-        if (uiManagerDoc == null || uiManagerDoc.rootVisualElement == null) yield break;
-
-        VisualElement root = uiManagerDoc.rootVisualElement;
-        VisualElement targetSlot = null;
-
-        if (owner.unitFaction == Faction.Player) {
-            VisualElement playerTrack = root.Q<VisualElement>("player-track");
-            if (playerTrack != null) {
-                targetSlot = playerTrack.Q<VisualElement>($"slot-{tickIndex}");
-            }
+        UIDocument doc = TimeLineUI.Instance.GetComponent<UIDocument>();
+        if (doc?.rootVisualElement == null && UIManager.Instance != null) {
+            doc = UIManager.Instance.GetComponent<UIDocument>();
         }
-        else {
-            VisualElement enemyTracksContainer = root.Q<VisualElement>("enemy-tracks-container");
-            if (enemyTracksContainer != null) {
-                var rows = enemyTracksContainer.Query<VisualElement>(className: "track-row").ToList();
-                foreach (var row in rows) {
-                    Label nameLabel = row.Q<Label>(className: "track-header-label");
-                    if (nameLabel != null && nameLabel.text == owner.GetName()) {
-                        targetSlot = row.Q<VisualElement>($"slot-{tickIndex}");
-                        break;
-                    }
-                }
-            }
-        }
+        if (doc?.rootVisualElement == null) yield break;
 
-        if (targetSlot != null) {
-            var boxItem = targetSlot.Q<VisualElement>(className: "box-item");
-            if (boxItem != null) {
-                boxItem.AddToClassList("is-executing");
-                yield return new WaitForSeconds(0.7f);
-                boxItem.RemoveFromClassList("is-executing");
-            }
+        VisualElement boxContainer = doc.rootVisualElement.Q<VisualElement>($"box-container-{tickIndex}");
+        if (boxContainer != null) {
+            var boxes = boxContainer.Query<VisualElement>(className: "box-item").ToList();
+            foreach (var b in boxes) b.AddToClassList("is-executing");
+            yield return new WaitForSeconds(0.4f);
+            foreach (var b in boxes) b.RemoveFromClassList("is-executing");
         }
     }
 }

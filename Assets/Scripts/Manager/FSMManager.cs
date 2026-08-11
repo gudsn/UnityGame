@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// 가변 라운드 및 유닛 턴 순서 제어 클래스
 public class FSMManager : MonoBehaviour {
     [SerializeField] private PlayerFSM playerFSM;
     [SerializeField] private EnemyController enemyController;
@@ -12,9 +13,13 @@ public class FSMManager : MonoBehaviour {
     private int currentTime = 0;
     private const int actionValue = 1000;
 
+    private int currentRound = 0;
+    public int CurrentRound => currentRound;
+
     private List<Unit> currentRoundPlayers = new List<Unit>();
     private List<Unit> currentRoundEnemies = new List<Unit>();
 
+    // 싱글톤 및 대기열 초기화
     private void Awake() {
         if (Instance != null) {
             Destroy(gameObject);
@@ -24,16 +29,18 @@ public class FSMManager : MonoBehaviour {
         unitQueue = new PriorityQueue<Unit>(PriorityQueue<Unit>.HeapType.min);
     }
 
+    // 유닛 생성 이벤트 구독
     void Start() {
         UnitManager.Instance.OnSpawnUnit += EnqueueNewUnit;
     }
 
+    // 전투 시작 및 첫 라운드 구동
     public void StartState() {
-        Debug.Log("Game Start - 아군 턴 기준 가변 라운드 시스템을 구동합니다.");
+        currentRound = 0;
         StartNewRound();
     }
 
-    // 새 유닛을 행동 대기열에 추가
+    // 유닛 속도 기반 대기열 등록
     public void EnqueueNewUnit(Unit unit) {
         int currentSpeed = Mathf.Max(1, unit.unitSpeed);
         int speed = actionValue / currentSpeed;
@@ -42,17 +49,16 @@ public class FSMManager : MonoBehaviour {
         unitQueue.Enqueue(nextTurnTime, unit);
     }
 
-    // 다음 아군 턴이 도달할 때까지 배치된 모든 적군을 한 라운드로 묶어 수집
+    // 다음 라운드 유닛 수집 및 라운드 이벤트 발행
     public void StartNewRound() {
-        if (unitQueue.Count == 0) {
-            Debug.Log("전장에 행동 가능한 유닛이 없습니다.");
-            return;
-        }
+        if (unitQueue.Count == 0) return;
+
+        currentRound++;
+        EventBus<UpdateRoundEvent>.Publish(new UpdateRoundEvent(currentRound));
 
         currentRoundPlayers.Clear();
         currentRoundEnemies.Clear();
 
-        // 1. 대기열을 스캔하여 미래에 가장 먼저 행동할 '아군의 턴 시간'을 데드라인으로 포착
         int nextPlayerTime = -1;
         List<KeyValuePair<int, Unit>> allItems = unitQueue.GetAllElements();
 
@@ -69,7 +75,6 @@ public class FSMManager : MonoBehaviour {
 
         currentTime = unitQueue.GetFirstPriority();
 
-        // 2. 데드라인 이하에 존재하는 모든 적군과 해당 시간대의 아군 수집
         while (unitQueue.Count > 0 && unitQueue.GetFirstPriority() <= nextPlayerTime) {
             int elementPriority = unitQueue.GetFirstPriority();
             Unit unit = unitQueue.Dequeue();
@@ -94,22 +99,18 @@ public class FSMManager : MonoBehaviour {
         StartCoroutine(ProcessRoundSequence());
     }
 
-    // 라운드 순차 실행 코루틴
+    // 적 의도 예고 -> 플레이어 예약 -> 타임라인 동시 연산 순차 시퀀스
     private IEnumerator ProcessRoundSequence() {
-        Debug.Log($"<color=cyan>====== [가변 라운드 오픈 (현재 시간: {currentTime})] ======</color>");
-
-        // [Step 2 추가] 타임라인 UI에 현재 라운드의 적군 트랙을 생성하도록 지시
+        // [수정] 단일 공유 타임라인 초기화
         if (TimeLineUI.Instance != null) {
-            TimeLineUI.Instance.BuildEnemyTracks(currentRoundEnemies);
+            TimeLineUI.Instance.ClearAll();
         }
 
-        // PHASE 1: 수집된 모든 적군의 의도를 수립하고 맵에 예고
         if (currentRoundEnemies.Count > 0) {
             enemyController.DisplayAllEnemyIntents();
             yield return new WaitForSeconds(1.0f);
         }
 
-        // PHASE 2: 플레이어 행동 예약 및 누적 대기
         if (currentRoundPlayers.Count > 0) {
             foreach (Unit playerUnit in currentRoundPlayers) {
                 if (playerUnit.GetHealth() <= 0) continue;
@@ -122,15 +123,11 @@ public class FSMManager : MonoBehaviour {
             }
         }
 
-        // PHASE 3: 캐싱된 적 의도를 타임라인 틱 엔진에 커밋하고 동시 연산
-        Debug.Log("[Phase 3] 모든 예약 마감. 타임라인 동시 연산을 시작합니다.");
-
         enemyController.CommitEnemyActionsToTimeline();
         enemyController.ClearAllEnemyIntents();
 
         yield return StartCoroutine(TimeLineManager.Instance.RunTickEngine());
 
-        // ROUND END: 틱 연산 종료 후 예약 박스 UI 제거 및 대기열 재진입
         if (TimeLineUI.Instance != null) {
             TimeLineUI.Instance.ClearAll();
         }

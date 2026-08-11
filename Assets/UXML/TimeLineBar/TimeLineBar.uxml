@@ -1,27 +1,108 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="TimeLineBar.uss" />
-    
-    <ui:VisualElement name="TimelineContainer" class="timeline-bar">
-        
-        <!-- 적군 트랙들이 동적으로 추가될 공간 (위쪽) -->
-        <ui:VisualElement name="enemy-tracks-container" />
 
-        <!-- 플레이어 고정 트랙 (아래쪽) -->
-        <ui:VisualElement name="player-track" class="track-row">
-            <ui:VisualElement class="track-header">
-                <ui:Label text="Player" class="track-header-label"/>
+    <ui:VisualElement name="TimelineContainer" class="timeline-container">
+        <!-- 1. 드래그 생성 박스 배치 영역 -->
+        <ui:VisualElement name="box-chain-container" class="box-chain-container" />
+
+        <!-- 2. 좌우 드래그 스크롤 타임라인 레일 -->
+        <ui:ScrollView name="timeline-scroll-view" mode="Horizontal" class="timeline-scroll-view" show-horizontal-scroller="false" show-vertical-scroller="false">
+            <ui:VisualElement name="timeline-rail" class="timeline-rail">
+
+                <!-- 틱 1 -->
+                <ui:VisualElement name="tick-col-1" class="tick-column">
+                    <ui:VisualElement name="box-container-1" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-1" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 1" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 1-2 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 2 -->
+                <ui:VisualElement name="tick-col-2" class="tick-column">
+                    <ui:VisualElement name="box-container-2" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-2" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 2" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 2-3 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 3 -->
+                <ui:VisualElement name="tick-col-3" class="tick-column">
+                    <ui:VisualElement name="box-container-3" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-3" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 3" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 3-4 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 4 -->
+                <ui:VisualElement name="tick-col-4" class="tick-column">
+                    <ui:VisualElement name="box-container-4" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-4" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 4" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 4-5 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 5 -->
+                <ui:VisualElement name="tick-col-5" class="tick-column">
+                    <ui:VisualElement name="box-container-5" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-5" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 5" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 5-6 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 6 -->
+                <ui:VisualElement name="tick-col-6" class="tick-column">
+                    <ui:VisualElement name="box-container-6" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-6" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 6" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 6-7 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 7 -->
+                <ui:VisualElement name="tick-col-7" class="tick-column">
+                    <ui:VisualElement name="box-container-7" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-7" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 7" class="tick-label" />
+                </ui:VisualElement>
+
+                <!-- 💡 7-8 이음선 -->
+                <ui:VisualElement class="tick-connector" />
+
+                <!-- 틱 8 -->
+                <ui:VisualElement name="tick-col-8" class="tick-column">
+                    <ui:VisualElement name="box-container-8" class="tick-box-container">
+                        <ui:VisualElement name="empty-node-8" class="empty-node" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="tick-line" />
+                    <ui:Label text="틱 8" class="tick-label" />
+                </ui:VisualElement>
+
             </ui:VisualElement>
-            
-            <!-- 8 틱 슬롯 -->
-            <ui:VisualElement name="slot-1" class="track-slot"><ui:Label text="1" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-2" class="track-slot"><ui:Label text="2" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-3" class="track-slot"><ui:Label text="3" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-4" class="track-slot"><ui:Label text="4" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-5" class="track-slot"><ui:Label text="5" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-6" class="track-slot"><ui:Label text="6" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-7" class="track-slot"><ui:Label text="7" class="tick-label"/></ui:VisualElement>
-            <ui:VisualElement name="slot-8" class="track-slot"><ui:Label text="8" class="tick-label"/></ui:VisualElement>
-        </ui:VisualElement>
-
+        </ui:ScrollView>
     </ui:VisualElement>
 </ui:UXML>

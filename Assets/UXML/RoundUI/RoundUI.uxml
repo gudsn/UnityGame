@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UXML/RoundUI/RoundUI.uss?fileID=7433441132597879392&amp;guid=78c0ee3d792990d4f887cabd8cc2dc54&amp;type=3#RoundUI"/>
+    <ui:VisualElement name="round-container" class="round-container">
+        <ui:VisualElement name="round-badge" class="round-badge">
+            <ui:Label text="ROUND" name="round-title-label" class="round-title" style="-unity-font-definition: url(&quot;project://database/Assets/Fonts/%EC%98%A8%EA%B8%80%EC%9E%8E%20%EB%B0%95%EB%8B%A4%ED%98%84%EC%B2%B4.ttf?fileID=12800000&amp;guid=d83c5273c48b2bc46ab4de28de72b318&amp;type=3#온글잎 박다현체&quot;);"/>
+            <ui:Label text="1" name="round-number-label" class="round-number" style="-unity-font-definition: url(&quot;project://database/Assets/Fonts/%EC%98%A8%EA%B8%80%EC%9E%8E%20%EB%B0%95%EB%8B%A4%ED%98%84%EC%B2%B4.ttf?fileID=12800000&amp;guid=d83c5273c48b2bc46ab4de28de72b318&amp;type=3#온글잎 박다현체&quot;);"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

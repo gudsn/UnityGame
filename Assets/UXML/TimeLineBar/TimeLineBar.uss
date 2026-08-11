@@ -1,67 +1,154 @@
-/* 타임라인 바를 화면 하단에 고정 */
-.timeline-bar {
+/* 타임라인 바 전체 래퍼 */
+.timeline-container {
     position: absolute;
     bottom: 20px;
     left: 50%;
-    translate: -50% 0; /* 가운데 정렬 */
-    background-color: rgba(25, 25, 30, 0.95);
-    border-width: 2px;
-    border-color: #444450;
-    border-radius: 8px;
-    padding: 10px;
-    align-items: flex-start;
+    translate: -50% 0;
+    width: 92%;
+    height: 155px;
+    justify-content: center;
+    align-items: center;
+    picking-mode: ignore;
 }
 
-/* 유닛 하나당 할당되는 가로 한 줄 (트랙) */
-.track-row {
+.box-chain-container {
+    picking-mode: ignore;
+}
+
+/* 수평 스크롤 뷰 */
+.timeline-scroll-view {
+    width: 100%;
+    height: 100%;
+    picking-mode: ignore;
+}
+
+.timeline-scroll-view .unity-scroll-view__content-container {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 8px;
-}
-
-/* 유닛 이름/초상화 영역 */
-.track-header {
-    width: 80px;
-    height: 60px;
-    background-color: #33333C;
-    margin-right: 10px;
     justify-content: center;
+    padding-left: 20px;
+    padding-right: 20px;
+    picking-mode: ignore;
+}
+
+.timeline-rail {
+    flex-direction: row;
+    align-items: flex-end;
+    picking-mode: ignore;
+}
+
+/* 틱 컬럼 */
+.tick-column {
     align-items: center;
-    border-radius: 4px;
+    min-width: 70px;
+    picking-mode: ignore;
 }
 
-.track-header-label {
-    color: white;
-    font-size: 12px;
-    -unity-font-style: bold;
-}
-
-/* 8개의 틱 슬롯 (이곳에 PlayerInputUI의 박스가 드롭됨) */
-.track-slot {
-    width: 60px;
-    height: 60px;
-    background-color: #1E1E24;
-    border-width: 1px;
-    border-color: #4A4A55;
-    margin-right: 4px;
-    border-radius: 4px;
+.tick-box-container {
+    flex-direction: row;
     align-items: center;
     justify-content: center;
+    min-height: 70px;
+    height: 70px;
+    picking-mode: ignore;
 }
 
-/* 틱 번호 라벨 */
-.tick-label {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    font-size: 10px;
-    color: #666677;
+/* 타임라인 틱 사이 이음선 */
+.tick-connector {
+    width: 24px;
+    height: 4px;
+    background-color: #4A3B32;
+    align-self: flex-start;
+    margin-top: 33px;
+    margin-left: -4px;
+    margin-right: -4px;
+    picking-mode: ignore;
 }
 
-/* 틱 실행 직전 아이콘 펄스(확대/축소) 애니메이션 효과 */
-.box-item.is-executing {
-    scale: 1.25;
+/* 마름모 노드 크기 */
+.empty-node {
+    width: 66px;
+    height: 66px;
+    -unity-background-scale-mode: scale-to-fit;
+    picking-mode: ignore;
+    opacity: 0.85;
+}
+
+/* 행동 박스 크기 */
+.box-item {
+    width: 68px;
+    height: 68px;
+    margin-left: 0;
+    margin-right: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    picking-mode: position;
     transition-property: scale;
-    transition-duration: 0.4s; 
-    transition-timing-function: ease-out-sine;
+    transition-duration: 0.15s;
+}
+
+.box-item:hover {
+    scale: 1.1;
+}
+
+/* 연파랑(#3B5998) 브래킷 선 (└──────┘) */
+.tick-line {
+    width: 100%;
+    min-width: 58px;
+    height: 6px;
+    background-color: transparent;
+    
+    /* 하단 가로 밑줄 */
+    border-bottom-width: 2px;
+    border-bottom-color: #3B5998;
+    
+    /* 좌측 위로 꺾인 선 */
+    border-left-width: 2px;
+    border-left-color: #3B5998;
+    border-bottom-left-radius: 2px;
+    
+    /* 우측 위로 꺾인 선 */
+    border-right-width: 2px;
+    border-right-color: #3B5998;
+    border-bottom-right-radius: 2px;
+
+    /* 상단 테두리 제거 */
+    border-top-width: 0;
+
+    margin-top: 4px;
+    picking-mode: ignore;
+}
+
+/* 💡 [수정] 폰트 크기 확대 (16px -> 20px) 및 간격 조정 */
+.tick-label {
+    margin-top: 5px;
+    font-size: 20px;
+    color: #3B5998;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-font-definition: initial;
+    -unity-font: url("project://database/Assets/Fonts/온글잎 박다현체.ttf");
+    picking-mode: ignore;
+}
+
+.box-item.is-executing {
+    scale: 1.35;
+    transition-property: scale;
+    transition-duration: 0.25s;
+}
+
+/* 드래그 체인 프리뷰 */
+.chain-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    picking-mode: ignore;
+}
+
+.box-divider {
+    width: 24px;
+    height: 4px;
+    background-color: #4A3B32;
+    margin-left: -4px;
+    margin-right: -4px;
+    picking-mode: ignore;
 }

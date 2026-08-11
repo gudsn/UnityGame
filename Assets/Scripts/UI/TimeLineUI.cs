@@ -3,212 +3,289 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-[RequireComponent(typeof(UIDocument))]
 public class TimeLineUI : MonoBehaviour {
     public static TimeLineUI Instance { get; private set; }
 
-    [Header("UI 아이콘 에셋 (인스펙터 직접 할당)")]
-    [SerializeField] private Sprite moveIcon;
-    [SerializeField] private Sprite attackIcon;
+    [Header("스프라이트 에셋")]
+    [SerializeField] private Sprite emptyBoxSprite;
+    [SerializeField] private Sprite moveBoxSprite;
+    [SerializeField] private Sprite attackBoxSprite;
 
-    public Sprite MoveIcon => moveIcon;
-    public Sprite AttackIcon => attackIcon;
+    public Sprite EmptyBoxSprite => emptyBoxSprite;
+    public Sprite MoveBoxSprite => moveBoxSprite;
+    public Sprite AttackBoxSprite => attackBoxSprite;
 
     [SerializeField] private UIDocument uiDocument;
 
-    private VisualElement boxChainContainer;
-    private VisualElement enemyTracksContainer;
-    public VisualElement PlayerTrack { get; private set; }
+    // UI 지연 탐색 프로퍼티
+    private VisualElement _timelineRail;
+    public VisualElement timelineRail {
+        get {
+            if (_timelineRail == null) {
+                VisualElement root = GetRootVisualElement();
+                if (root != null) _timelineRail = root.Q<VisualElement>("timeline-rail");
+            }
+            return _timelineRail;
+        }
+    }
+
+    private ScrollView _timelineScrollView;
+    public ScrollView timelineScrollView {
+        get {
+            if (_timelineScrollView == null) {
+                VisualElement root = GetRootVisualElement();
+                if (root != null) _timelineScrollView = root.Q<ScrollView>("timeline-scroll-view");
+            }
+            return _timelineScrollView;
+        }
+    }
+
+    public VisualElement PlayerTrack => timelineRail;
+
+    private Dictionary<(Unit, ICommand), List<VisualElement>> commandToBoxMap = new();
+    private bool isScrollDraggerInitialized = false;
 
     private void Awake() {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
-
-        InitUI();
     }
 
-    private void InitUI() {
-        if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
-        if (uiDocument != null && uiDocument.rootVisualElement != null) {
-            boxChainContainer = uiDocument.rootVisualElement.Q<VisualElement>("box-chain-container");
-        }
+    private void Start() {
+        CheckInitScrollDragger();
+    }
 
+    public VisualElement GetRootVisualElement() {
+        if (uiDocument?.rootVisualElement != null) return uiDocument.rootVisualElement;
         if (UIManager.Instance != null) {
-            UIDocument uiManagerDoc = UIManager.Instance.GetComponent<UIDocument>();
-            if (uiManagerDoc != null && uiManagerDoc.rootVisualElement != null) {
-                enemyTracksContainer = uiManagerDoc.rootVisualElement.Q<VisualElement>("enemy-tracks-container");
-                PlayerTrack = uiManagerDoc.rootVisualElement.Q<VisualElement>("player-track");
+            var doc = UIManager.Instance.GetComponent<UIDocument>();
+            if (doc != null) return doc.rootVisualElement;
+        }
+        return null;
+    }
+
+    private void CheckInitScrollDragger() {
+        if (!isScrollDraggerInitialized && timelineScrollView != null) {
+            new TimelineScrollDragger(timelineScrollView);
+            isScrollDraggerInitialized = true;
+        }
+    }
+
+    public void ResetAllEmptyNodes() {
+        if (timelineRail == null) return;
+
+        for (int i = 1; i <= 8; i++) {
+            VisualElement emptyNode = timelineRail.Q<VisualElement>($"empty-node-{i}");
+            if (emptyNode != null) {
+                if (emptyBoxSprite != null) emptyNode.style.backgroundImage = new StyleBackground(emptyBoxSprite);
+                emptyNode.style.display = DisplayStyle.Flex;
             }
         }
     }
 
-    public void BuildEnemyTracks(List<Unit> enemies) {
-        if (enemyTracksContainer == null) InitUI();
-        if (enemyTracksContainer == null) return;
+    public void BuildEnemyTracks(List<Unit> enemies) => ResetAllEmptyNodes();
 
-        enemyTracksContainer.Clear();
+    // 적 행동 배치
+    public void PlaceEnemyActionIntoSlot(string unitName, int tickIndex, string commandType) {
+        if (tickIndex < 1 || tickIndex > 8 || timelineRail == null) return;
 
-        var sortedEnemies = enemies.OrderByDescending(e => e.unitSpeed).ToList();
+        VisualElement boxContainer = timelineRail.Q<VisualElement>($"box-container-{tickIndex}");
+        if (boxContainer == null) return;
 
-        foreach (var enemy in sortedEnemies) {
-            VisualElement trackRow = CreateTrackRow(enemy.GetName());
-            enemyTracksContainer.Add(trackRow);
-        }
+        VisualElement emptyNode = boxContainer.Q<VisualElement>($"empty-node-{tickIndex}");
+        if (emptyNode != null) emptyNode.style.display = DisplayStyle.None;
+
+        VisualElement actionBox = CreateActionBox(commandType, Faction.Enemy);
+        boxContainer.Add(actionBox);
     }
 
-    private VisualElement CreateTrackRow(string unitName) {
-        VisualElement row = new VisualElement();
-        row.AddToClassList("track-row");
+    // 플레이어 행동 배치
+    public VisualElement PlacePlayerActionIntoSlot(Unit owner, ICommand cmd, int tickIndex, string commandType) {
+        if (tickIndex < 1 || tickIndex > 8 || timelineRail == null) return null;
 
-        VisualElement header = new VisualElement();
-        header.AddToClassList("track-header");
-        Label nameLabel = new Label(unitName);
-        nameLabel.AddToClassList("track-header-label");
-        header.Add(nameLabel);
-        row.Add(header);
+        VisualElement boxContainer = timelineRail.Q<VisualElement>($"box-container-{tickIndex}");
+        if (boxContainer == null) return null;
 
-        for (int i = 1; i <= 8; i++) {
-            VisualElement slot = new VisualElement();
-            slot.name = $"slot-{i}";
-            slot.AddToClassList("track-slot");
+        VisualElement emptyNode = boxContainer.Q<VisualElement>($"empty-node-{tickIndex}");
+        if (emptyNode != null) emptyNode.style.display = DisplayStyle.None;
 
-            Label tickLabel = new Label(i.ToString());
-            tickLabel.AddToClassList("tick-label");
-            slot.Add(tickLabel);
+        VisualElement actionBox = CreateActionBox(commandType, Faction.Player);
+        actionBox.userData = cmd;
 
-            row.Add(slot);
+        actionBox.RegisterCallback<PointerDownEvent>(evt => {
+            if (evt.button == 1) {
+                CancelPlayerCommand(owner, cmd);
+                evt.StopPropagation();
+            }
+        });
+
+        boxContainer.Add(actionBox);
+
+        var key = (owner, cmd);
+        if (!commandToBoxMap.ContainsKey(key)) commandToBoxMap[key] = new List<VisualElement>();
+        commandToBoxMap[key].Add(actionBox);
+
+        return actionBox;
+    }
+
+    private VisualElement CreateActionBox(string commandType, Faction faction) {
+        VisualElement box = new VisualElement();
+        box.AddToClassList("box-item");
+        box.AddToClassList(faction == Faction.Player ? "player-reserved" : "enemy-reserved");
+
+        Sprite targetSprite = null;
+        if (commandType == "Prepare") {
+            targetSprite = emptyBoxSprite;
+        }
+        else if (commandType.Contains("Move")) {
+            targetSprite = moveBoxSprite;
+        }
+        else {
+            targetSprite = attackBoxSprite;
         }
 
-        return row;
+        if (targetSprite != null) box.style.backgroundImage = new StyleBackground(targetSprite);
+
+        return box;
+    }
+
+    // 예약 취소
+    public void CancelPlayerCommand(Unit owner, ICommand cmd) {
+        var key = (owner, cmd);
+        if (!commandToBoxMap.TryGetValue(key, out var boxList)) return;
+
+        foreach (var box in boxList) {
+            VisualElement parent = box.parent;
+            box.RemoveFromHierarchy();
+
+            if (parent != null) {
+                var remaining = parent.Query<VisualElement>(className: "box-item").ToList();
+                if (remaining.Count == 0) {
+                    var emptyNode = parent.Q<VisualElement>(className: "empty-node");
+                    if (emptyNode != null) emptyNode.style.display = DisplayStyle.Flex;
+                }
+            }
+        }
+        commandToBoxMap.Remove(key);
+
+        if (TimeLineManager.Instance != null) {
+            TimeLineManager.Instance.CancelMacroCommand(owner, cmd);
+        }
+
+        PlayerFSM playerFSM = Object.FindFirstObjectByType<PlayerFSM>();
+        if (playerFSM != null && playerFSM.activeUnit == owner) {
+            if (cmd is PlayerMoveCommand || cmd is MoveCommand) {
+                owner.virtualPosition = owner.currentPosition;
+                playerFSM.HasReservedMove = false;
+                EventBus<ShowPlayerActionsEvent>.Publish(new ShowPlayerActionsEvent());
+            }
+            else if (cmd is AttackCommand) {
+                playerFSM.HasReservedAttack = false;
+                EventBus<ShowPlayerActionsEvent>.Publish(new ShowPlayerActionsEvent());
+            }
+        }
     }
 
     public void ClearEnemyTrackSlots() {
-        if (enemyTracksContainer == null) return;
-        foreach (var row in enemyTracksContainer.Query<VisualElement>(className: "track-row").ToList()) {
-            for (int i = 1; i <= 8; i++) {
-                VisualElement slot = row.Q<VisualElement>($"slot-{i}");
-                if (slot != null) {
-                    var boxes = slot.Query<VisualElement>(className: "box-item").ToList();
-                    foreach (var box in boxes) {
-                        box.RemoveFromHierarchy();
-                    }
-                }
-            }
-        }
-    }
-
-    // [추가] 플레이어 타임라인 슬롯(1~8)에 남아있는 예약 박스들을 일괄 제거
-    public void ClearPlayerTrackSlots() {
-        if (PlayerTrack == null) InitUI();
-        if (PlayerTrack == null) return;
-
+        if (timelineRail == null) return;
         for (int i = 1; i <= 8; i++) {
-            VisualElement slot = PlayerTrack.Q<VisualElement>($"slot-{i}");
-            if (slot != null) {
-                var boxes = slot.Query<VisualElement>(className: "box-item").ToList();
-                foreach (var box in boxes) {
-                    box.RemoveFromHierarchy();
-                }
-            }
+            VisualElement container = timelineRail.Q<VisualElement>($"box-container-{i}");
+            if (container == null) continue;
+
+            var enemyBoxes = container.Query<VisualElement>(className: "enemy-reserved").ToList();
+            foreach (var b in enemyBoxes) b.RemoveFromHierarchy();
+            CheckAndRestoreEmptyNode(container, i);
         }
     }
 
-    public void PlaceEnemyActionIntoSlot(string unitName, int tickIndex, string commandType) {
-        if (enemyTracksContainer == null) InitUI();
-        if (enemyTracksContainer == null) return;
+    public void ClearPlayerTrackSlots() {
+        if (timelineRail == null) return;
+        for (int i = 1; i <= 8; i++) {
+            VisualElement container = timelineRail.Q<VisualElement>($"box-container-{i}");
+            if (container == null) continue;
 
-        foreach (var row in enemyTracksContainer.Query<VisualElement>(className: "track-row").ToList()) {
-            Label nameLabel = row.Q<Label>(className: "track-header-label");
-            if (nameLabel != null && nameLabel.text == unitName) {
-                VisualElement slot = row.Q<VisualElement>($"slot-{tickIndex}");
-                if (slot != null) {
-                    VisualElement actionBox = new VisualElement();
-                    actionBox.AddToClassList("box-item");
+            var playerBoxes = container.Query<VisualElement>(className: "player-reserved").ToList();
+            foreach (var b in playerBoxes) b.RemoveFromHierarchy();
+            CheckAndRestoreEmptyNode(container, i);
+        }
+        commandToBoxMap.Clear();
+    }
 
-                    Sprite targetSprite = (commandType == "MoveCommand") ? moveIcon : attackIcon;
-                    if (targetSprite != null) {
-                        Image iconImage = new Image();
-                        iconImage.sprite = targetSprite;
-                        iconImage.AddToClassList("box-icon");
-                        actionBox.Add(iconImage);
-                    }
-
-                    slot.Add(actionBox);
-                }
-                break;
-            }
+    private void CheckAndRestoreEmptyNode(VisualElement container, int tickIndex) {
+        var remaining = container.Query<VisualElement>(className: "box-item").ToList();
+        if (remaining.Count == 0) {
+            var emptyNode = container.Q<VisualElement>($"empty-node-{tickIndex}");
+            if (emptyNode != null) emptyNode.style.display = DisplayStyle.Flex;
         }
     }
 
+    public void ClearAll() {
+        _timelineRail = null;
+        _timelineScrollView = null;
+
+        ClearEnemyTrackSlots();
+        ClearPlayerTrackSlots();
+        ResetAllEmptyNodes();
+    }
+
+    // 화면 좌측 상단 드래그 체인 루트 생성
     public VisualElement CreateCommandGroupUI(string commandType) {
-        if (boxChainContainer == null) InitUI();
+        VisualElement rootCanvas = GetRootVisualElement();
+        if (rootCanvas == null) return null;
 
         VisualElement groupRoot = new VisualElement();
-        groupRoot.AddToClassList("command-group");
+        groupRoot.name = "drag-command-group";
         groupRoot.userData = commandType;
+
+        groupRoot.style.position = Position.Absolute;
+        groupRoot.style.top = 140;
+        groupRoot.style.left = 30;
+        groupRoot.style.flexDirection = FlexDirection.Row;
+        groupRoot.style.alignItems = Align.Center;
+        groupRoot.pickingMode = PickingMode.Position;
 
         VisualElement tickContainer = new VisualElement();
         tickContainer.name = "tick-container";
         tickContainer.AddToClassList("chain-container");
 
         groupRoot.Add(tickContainer);
+        rootCanvas.Add(groupRoot);
+        groupRoot.BringToFront();
 
-        boxChainContainer?.Add(groupRoot);
         return groupRoot;
     }
 
+    // 💡 [수정] 박스와 이음선(.box-divider)을 빈틈없이 맞물려 생성
     public void PopulateTickBoxes(VisualElement groupElement, string commandType, int tickCount) {
         if (groupElement == null) return;
 
         VisualElement tickContainer = groupElement.Q<VisualElement>("tick-container");
         if (tickContainer == null) return;
-
         tickContainer.Clear();
 
         for (int i = 0; i < tickCount; i++) {
             Sprite targetSprite = null;
 
-            if (commandType == "MoveCommand") {
-                targetSprite = moveIcon;
+            if (commandType.Contains("Attack")) {
+                targetSprite = (i == 0) ? emptyBoxSprite : attackBoxSprite; // 1틱 대기(빈 박스), 2틱 타격(칼)
             }
-            else if (commandType == "AttackCommand") {
-                if (i > 0) targetSprite = attackIcon;
+            else if (commandType.Contains("Move")) {
+                targetSprite = moveBoxSprite;
             }
 
-            VisualElement box = CreateSingleTickBox(targetSprite);
+            VisualElement box = new VisualElement();
+            box.AddToClassList("box-item");
+            box.pickingMode = PickingMode.Position;
+
+            if (targetSprite != null) box.style.backgroundImage = new StyleBackground(targetSprite);
+
             tickContainer.Add(box);
 
+            // 박스와 박스 사이에 딱 맞는 이음선 추가
             if (i < tickCount - 1) {
-                tickContainer.Add(CreateDivider());
+                VisualElement divider = new VisualElement();
+                divider.AddToClassList("box-divider");
+                tickContainer.Add(divider);
             }
-        }
-    }
-
-    private VisualElement CreateSingleTickBox(Sprite iconSprite) {
-        VisualElement box = new VisualElement();
-        box.AddToClassList("box-item");
-
-        if (iconSprite != null) {
-            Image iconImage = new Image();
-            iconImage.sprite = iconSprite;
-            iconImage.AddToClassList("box-icon");
-            box.Add(iconImage);
-        }
-
-        return box;
-    }
-
-    private VisualElement CreateDivider() {
-        VisualElement divider = new VisualElement();
-        divider.AddToClassList("box-divider");
-        return divider;
-    }
-
-    public void ClearAll() {
-        boxChainContainer?.Clear();
-        ClearPlayerTrackSlots(); // 라운드 종료 시 플레이어 타임라인 슬롯도 함께 초기화
-        if (enemyTracksContainer != null) {
-            enemyTracksContainer.Clear();
         }
     }
 }

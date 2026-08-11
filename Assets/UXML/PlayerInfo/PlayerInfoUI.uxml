@@ -1,0 +1,54 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UXML/PlayerInfo/PlayerInfoUI.uss" />
+    
+    <ui:VisualElement name="player-info-container" class="player-info-container">
+        <!-- 1. 좌측 초상화 -->
+        <ui:VisualElement name="portrait-frame" class="portrait-frame">
+            <ui:Image name="portrait-image" class="portrait-image" />
+        </ui:VisualElement>
+
+        <!-- 2. 우측 게이지 + 스텟 컬럼 -->
+        <ui:VisualElement name="info-right-column" class="info-right-column">
+            
+            <!-- 게이지 구역 -->
+            <ui:VisualElement name="gauge-container" class="gauge-container">
+                <!-- HP 바 -->
+                <ui:VisualElement name="hp-bar-group" class="gauge-group">
+                    <ui:VisualElement name="hp-bar-bg" class="custom-bar-bg">
+                        <ui:VisualElement name="hp-bar-fill" class="custom-bar-fill" />
+                    </ui:VisualElement>
+                    <ui:Label name="hp-text" text="100/100" class="gauge-text" />
+                </ui:VisualElement>
+                
+                <!-- MP 바 -->
+                <ui:VisualElement name="mp-bar-group" class="gauge-group mp-group-indent">
+                    <ui:VisualElement name="mp-bar-bg" class="custom-bar-bg custom-bar-bg-mp">
+                        <ui:VisualElement name="mp-bar-fill" class="custom-bar-fill" />
+                    </ui:VisualElement>
+                    <ui:Label name="mp-text" text="100/100" class="gauge-text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- 스텟 구역 -->
+            <ui:VisualElement name="stat-section" class="stat-section">
+                <ui:VisualElement class="stat-row">
+                    <ui:Label text="ATK" class="stat-label" />
+                    <ui:Label name="atk-value" text="10" class="stat-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat-row">
+                    <ui:Label text="DEF" class="stat-label" />
+                    <ui:Label name="def-value" text="5" class="stat-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat-row">
+                    <ui:Label text="INT" class="stat-label" />
+                    <ui:Label name="int-value" text="~" class="stat-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat-row">
+                    <ui:Label text="SPD" class="stat-label" />
+                    <ui:Label name="spd-value" text="10" class="stat-value" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

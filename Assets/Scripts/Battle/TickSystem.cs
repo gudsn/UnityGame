@@ -53,17 +53,16 @@ public class MoveScheduler : IActionScheduler {
         Vector2Int targetPos = new Vector2Int(targetTile.gridX, targetTile.gridY);
         TileData startTile = GridSystem.Instance.GetTileData(owner.currentPosition);
 
-        // [이중 길막 검사] 
-        // 1. 타일 데이터 자체의 점유 상태(isOccupied) 확인
-        // 2. RegisteredUnit 사전에 나 이외의 살아있는 유닛이 존재하는지 확인
+        // [이중 길막 검사]
         bool isOccupiedInGrid = targetTile.isOccupied && targetPos != owner.currentPosition;
         bool hasOtherUnit = UnitManager.Instance.RegisteredUnit.TryGetValue(targetPos, out Unit occupant)
                             && occupant != null && occupant != owner && occupant.GetHealth() > 0;
 
+        // 길목이 막혔을 경우
         if (isOccupiedInGrid || hasOtherUnit) {
-            Debug.Log($"<color=orange>[이동 완전 차단]</color> {owner.gameObject.name}의 앞길이 막혀 이동이 중단되었습니다.");
+            Debug.Log($"<color=orange>[이동 완전 차단]</color> {owner.gameObject.name}의 앞길이 막혀 남은 모든 이동이 취소됩니다.");
 
-            // 1. 가상 좌표 및 물리 위치를 출발 타일 정중앙으로 완벽 스냅
+            // 1. 가상 좌표 및 물리 위치를 출발 타일 정중앙으로 스냅
             owner.virtualPosition = owner.currentPosition;
 
             if (startTile != null) {
@@ -71,7 +70,7 @@ public class MoveScheduler : IActionScheduler {
                 exactTilePos.y = owner.transform.position.y;
                 owner.transform.position = exactTilePos;
 
-                // 2. 시선을 직교 사방(동/서/남/북)으로 스냅
+                // 시선을 직교 사방(동/서/남/북)으로 스냅
                 Vector3 currentForward = owner.transform.forward;
                 Vector3 cardinalForward = (Mathf.Abs(currentForward.x) > Mathf.Abs(currentForward.z))
                     ? new Vector3(Mathf.Sign(currentForward.x), 0, 0)
@@ -82,7 +81,9 @@ public class MoveScheduler : IActionScheduler {
                 }
             }
 
-            // 물리 보간 연산으로 진입하지 않고 즉시 종료
+            // 2. 🔥 [수정 핵심] 타임라인 대기열에서 이 유닛의 남은 '이동' 틱 명령을 전부 제거
+            TimeLineManager.Instance.CancelRemainingCommands(owner, CommandPriority.Move);
+
             yield break;
         }
 
@@ -110,6 +111,9 @@ public class MoveScheduler : IActionScheduler {
                     owner.transform.position = resetPos;
                 }
                 owner.virtualPosition = owner.currentPosition;
+
+                // 실시간 충돌 시에도 남은 이동 틱 취소
+                TimeLineManager.Instance.CancelRemainingCommands(owner, CommandPriority.Move);
                 yield break;
             }
 

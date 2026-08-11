@@ -4,66 +4,69 @@ using UnityEngine.UIElements;
 
 public class TimeLineDragger {
     private readonly VisualElement targetElement;
-    private readonly VisualElement playerTrack;
+    private readonly VisualElement timelineRoot;
 
     private bool isDragging;
-    private Vector2 dragStartPosition;
-    private Vector2 elementStartPosition;
+    private Vector2 dragStartPointerPos;
+    private Vector2 elementStartPos;
 
-    private static GameObject dragHoverGhostInstance;
-    private static int lastHoveredSlotIndex = -1;
+    public TimeLineDragger(VisualElement target, VisualElement timeline) {
+        if (target == null) return;
 
-    public TimeLineDragger(VisualElement target, VisualElement track) {
         targetElement = target;
-        playerTrack = track;
+        timelineRoot = timeline;
+        targetElement.pickingMode = PickingMode.Position;
 
         targetElement.RegisterCallback<PointerDownEvent>(OnPointerDown);
         targetElement.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         targetElement.RegisterCallback<PointerUpEvent>(OnPointerUp);
     }
 
+    // 드래그 시작
     private void OnPointerDown(PointerDownEvent evt) {
+        if (targetElement == null || evt.button != 0) return;
+
         isDragging = true;
-        dragStartPosition = evt.position;
+        dragStartPointerPos = evt.position;
 
-        float startLeft = float.IsNaN(targetElement.style.left.value.value) ? targetElement.layout.x : targetElement.style.left.value.value;
-        float startTop = float.IsNaN(targetElement.style.top.value.value) ? targetElement.layout.y : targetElement.style.top.value.value;
-        elementStartPosition = new Vector2(startLeft, startTop);
+        float left = targetElement.resolvedStyle.left;
+        float top = targetElement.resolvedStyle.top;
+        if (float.IsNaN(left) || left == 0) left = targetElement.layout.x;
+        if (float.IsNaN(top) || top == 0) top = targetElement.layout.y;
+        if (left == 0 && top == 0) {
+            left = 30f;
+            top = 140f;
+        }
 
+        elementStartPos = new Vector2(left, top);
         targetElement.BringToFront();
         targetElement.CapturePointer(evt.pointerId);
         evt.StopPropagation();
     }
 
+    // 드래그 이동
     private void OnPointerMove(PointerMoveEvent evt) {
-        if (!isDragging || !targetElement.HasPointerCapture(evt.pointerId)) return;
+        if (!isDragging || targetElement == null || !targetElement.HasPointerCapture(evt.pointerId)) return;
 
-        Vector2 delta = (Vector2)evt.position - dragStartPosition;
-        targetElement.style.left = elementStartPosition.x + delta.x;
-        targetElement.style.top = elementStartPosition.y + delta.y;
-
-        ICommand cmd = targetElement.userData as ICommand;
-        if (cmd is AttackCommand && playerTrack != null) {
-            CheckDragHoverSlot(evt.position);
-        }
-
+        Vector2 delta = (Vector2)evt.position - dragStartPointerPos;
+        targetElement.style.left = elementStartPos.x + delta.x;
+        targetElement.style.top = elementStartPos.y + delta.y;
         evt.StopPropagation();
     }
 
+    // 드롭
     private void OnPointerUp(PointerUpEvent evt) {
-        if (!isDragging) return;
+        if (!isDragging || targetElement == null) return;
 
         isDragging = false;
         if (targetElement.HasPointerCapture(evt.pointerId)) {
             targetElement.ReleasePointer(evt.pointerId);
         }
 
-        ClearDragHoverGhost();
-
         bool droppedInTimeline = false;
         ICommand cmd = targetElement.userData as ICommand;
 
-        if (cmd != null && playerTrack != null) {
+        if (cmd != null && TimeLineUI.Instance != null && TimeLineManager.Instance != null) {
             int boxTickCount = 1;
             string commandTypeName = cmd.GetType().Name;
 
@@ -71,90 +74,50 @@ public class TimeLineDragger {
             else if (cmd is MoveCommand m && m.path != null) boxTickCount = m.path.Count;
             else if (cmd is PlayerMoveCommand pm && pm.path != null) boxTickCount = pm.path.Count;
 
-            int targetSlotIndexFound = -1;
-            Rect targetRect = targetElement.worldBound;
-            float boxLeftX = targetRect.xMin;
-
-            for (int i = 1; i <= 8; i++) {
-                VisualElement slot = playerTrack.Q<VisualElement>($"slot-{i}");
-                if (slot != null) {
-                    Rect slotRect = slot.worldBound;
-                    if (boxLeftX >= slotRect.xMin && boxLeftX <= slotRect.xMax) {
-                        if (targetRect.yMax >= slotRect.yMin && targetRect.yMin <= slotRect.yMax) {
-                            targetSlotIndexFound = i;
-                            break;
-                        }
-                    }
-                }
-            }
+            // 💡 [수정] 우측 보정이 반영된 마우스 기준 틱 컬럼 탐색
+            int targetSlotIndexFound = FindHoveredTickColumn(evt.position, targetElement);
 
             if (targetSlotIndexFound != -1) {
                 int startTick = targetSlotIndexFound;
+                Unit owner = GetOwnerFromCommand(cmd);
 
+                // 8틱 초과 검증
                 if (startTick + boxTickCount - 1 > 8) {
-                    Debug.Log("<color=yellow>[알림]</color> 타임라인 범위를 초과하여 배치할 수 없습니다!");
+                    Debug.Log("<color=yellow>[알림]</color> 타임라인(8틱) 범위를 초과하여 배치할 수 없습니다!");
+                }
+                // 동일 유닛 중복 예약 검증
+                else if (TimeLineManager.Instance.HasUnitReservedInTickRange(owner, startTick, boxTickCount)) {
+                    Debug.Log($"<color=yellow>[알림]</color> {owner.GetName()}은(는) 해당 틱에 이미 예약된 행동이 있습니다.");
                 }
                 else {
-                    bool hasOverlap = false;
+                    droppedInTimeline = true;
+                    targetElement.RemoveFromHierarchy();
+
+                    // 타임라인 슬롯에 틱별 박스 배치
                     for (int offset = 0; offset < boxTickCount; offset++) {
-                        int checkIndex = startTick + offset;
-                        VisualElement checkSlot = playerTrack.Q<VisualElement>($"slot-{checkIndex}");
+                        int currentTick = startTick + offset;
+                        string subType = commandTypeName;
+                        if (cmd is AttackCommand && offset == 0) subType = "Prepare";
 
-                        if (checkSlot != null) {
-                            bool hasGroup = checkSlot.Children().Any(e => e.ClassListContains("command-group") && e != targetElement);
-                            if (hasGroup) {
-                                hasOverlap = true;
-                                break;
-                            }
-                        }
+                        TimeLineUI.Instance.PlacePlayerActionIntoSlot(owner, cmd, currentTick, subType);
                     }
 
-                    if (hasOverlap) {
-                        Debug.Log("<color=yellow>[알림]</color> 이미 해당 틱 범위에 다른 행동이 예약되어 있습니다!");
-                    }
-                    else {
-                        droppedInTimeline = true;
-                        targetElement.RemoveFromHierarchy();
+                    // 스케줄러 등록 및 FSM 버튼 비활성화
+                    if (owner != null) {
+                        TimeLineManager.Instance.ScheduleActionAtTick(owner, cmd, startTick);
 
-                        for (int offset = 0; offset < boxTickCount; offset++) {
-                            int slotIndex = startTick + offset;
-                            VisualElement slot = playerTrack.Q<VisualElement>($"slot-{slotIndex}");
-                            if (slot != null) {
-                                VisualElement timelineBox = new VisualElement();
-                                timelineBox.AddToClassList("box-item");
-                                timelineBox.AddToClassList("command-group");
-
-                                Sprite iconSprite = null;
-                                if (TimeLineUI.Instance != null) {
-                                    if (commandTypeName.Contains("Move")) {
-                                        iconSprite = TimeLineUI.Instance.MoveIcon;
-                                    }
-                                    else if (commandTypeName.Contains("Attack")) {
-                                        if (offset > 0) iconSprite = TimeLineUI.Instance.AttackIcon;
-                                    }
+                        PlayerFSM playerFSM = Object.FindFirstObjectByType<PlayerFSM>();
+                        if (playerFSM != null && playerFSM.activeUnit == owner) {
+                            if (cmd is PlayerMoveCommand pmCmd) {
+                                if (pmCmd.destination != null) {
+                                    owner.virtualPosition = new Vector2Int(pmCmd.destination.gridX, pmCmd.destination.gridY);
                                 }
-
-                                if (iconSprite != null) {
-                                    Image iconImage = new Image();
-                                    iconImage.sprite = iconSprite;
-                                    iconImage.AddToClassList("box-icon");
-                                    timelineBox.Add(iconImage);
-                                }
-
-                                slot.Add(timelineBox);
+                                playerFSM.HasReservedMove = true;
+                                EventBus<DisableMoveButtonEvent>.Publish(new DisableMoveButtonEvent());
                             }
-                        }
-
-                        Unit owner = GetOwnerFromCommand(cmd);
-                        if (owner != null) {
-                            TimeLineManager.Instance.ScheduleActionAtTick(owner, cmd, startTick);
-
-                            // [핵심 보완] 타임라인 슬롯에 배치가 완전히 확정되었을 때만 virtualPosition 반영
-                            if (cmd is PlayerMoveCommand pmCmd && pmCmd.destination != null) {
-                                owner.virtualPosition = new Vector2Int(pmCmd.destination.gridX, pmCmd.destination.gridY);
-                            }
-                            else if (cmd is MoveCommand mCmd && mCmd.destination != null) {
-                                owner.virtualPosition = new Vector2Int(mCmd.destination.gridX, mCmd.destination.gridY);
+                            else if (cmd is AttackCommand) {
+                                playerFSM.HasReservedAttack = true;
+                                EventBus<DisableAttackButtonEvent>.Publish(new DisableAttackButtonEvent());
                             }
                         }
                     }
@@ -162,147 +125,64 @@ public class TimeLineDragger {
             }
         }
 
+        // 실패 시 복귀
         if (!droppedInTimeline) {
-            targetElement.style.left = elementStartPosition.x;
-            targetElement.style.top = elementStartPosition.y;
+            targetElement.style.left = elementStartPos.x;
+            targetElement.style.top = elementStartPos.y;
         }
 
         evt.StopPropagation();
     }
 
-    private void CheckDragHoverSlot(Vector2 pointerPos) {
-        int currentHoverSlot = -1;
-        Rect targetRect = targetElement.worldBound;
-        float boxLeftX = targetRect.xMin;
+    // 💡 [수정] 우측 보정 오프셋 적용 틱 탐색 함수
+    private int FindHoveredTickColumn(Vector2 pointerPos, VisualElement groupRoot) {
+        if (TimeLineUI.Instance == null) return -1;
 
+        VisualElement docRoot = TimeLineUI.Instance.GetRootVisualElement();
+        if (docRoot == null) return -1;
+
+        VisualElement timelineContainer = docRoot.Q<VisualElement>("TimelineContainer");
+        if (timelineContainer == null) return -1;
+
+        Rect timelineArea = timelineContainer.worldBound;
+        Rect groupBound = groupRoot.worldBound;
+
+        // Y축 높이 검사
+        bool isNearTimelineY = (pointerPos.y >= timelineArea.yMin - 80f && pointerPos.y <= timelineArea.yMax + 80f)
+                            || (groupBound.yMax >= timelineArea.yMin - 50f && groupBound.yMin <= timelineArea.yMax + 50f);
+
+        if (!isNearTimelineY) return -1;
+
+        // 💡 [우측 보정 적용] 첫 번째 박스 중심점 또는 마우스 포인터에 우측 오프셋을 보정
+        VisualElement firstBox = groupRoot.Q<VisualElement>(className: "box-item");
+        float checkX = (firstBox != null) ? firstBox.worldBound.center.x : pointerPos.x;
+
+        // 1~8번 컬럼 순회
         for (int i = 1; i <= 8; i++) {
-            VisualElement slot = playerTrack.Q<VisualElement>($"slot-{i}");
-            if (slot != null) {
-                Rect slotRect = slot.worldBound;
-                if (boxLeftX >= slotRect.xMin && boxLeftX <= slotRect.xMax) {
-                    if (targetRect.yMax >= slotRect.yMin && targetRect.yMin <= slotRect.yMax) {
-                        currentHoverSlot = i;
-                        break;
-                    }
+            VisualElement col = docRoot.Q<VisualElement>($"tick-col-{i}");
+            if (col != null) {
+                Rect colBound = col.worldBound;
+                if (checkX >= colBound.xMin - 15f && checkX <= colBound.xMax + 15f) {
+                    return i;
                 }
             }
         }
 
-        if (currentHoverSlot != lastHoveredSlotIndex) {
-            lastHoveredSlotIndex = currentHoverSlot;
-            ClearDragHoverGhost();
-
-            if (currentHoverSlot != -1) {
-                int attackHitTick = currentHoverSlot + 1;
-                ShowAttackValidationGhost(attackHitTick);
-            }
-        }
-    }
-
-    private bool IsWithinCrossRange(Vector3 originWorld, Vector3 targetWorld, int maxRange) {
-        TileData originTile = GridSystem.Instance.WorldPositionToGridTile(originWorld);
-        TileData targetTile = GridSystem.Instance.WorldPositionToGridTile(targetWorld);
-
-        if (originTile == null || targetTile == null) return false;
-
-        int dx = Mathf.Abs(originTile.gridX - targetTile.gridX);
-        int dy = Mathf.Abs(originTile.gridY - targetTile.gridY);
-
-        return (dx == 0 && dy <= maxRange) || (dy == 0 && dx <= maxRange);
-    }
-
-    private void ShowAttackValidationGhost(int hitTick) {
-        EnemyController enemyController = Object.FindFirstObjectByType<EnemyController>();
-        if (enemyController == null) return;
-
-        ICommand cmd = targetElement.userData as ICommand;
-        AttackCommand attackCmd = cmd as AttackCommand;
-        if (attackCmd == null) return;
-
-        Unit owner = attackCmd.owner;
-        Unit targetUnit = attackCmd.target;
-        if (owner == null) return;
-
-        Vector3 playerEffectiveWorldPos = owner.transform.position;
-
-        int lastPlacedMoveEndTick = -1;
-        if (playerTrack != null) {
-            for (int i = 8; i >= 1; i--) {
-                VisualElement slot = playerTrack.Q<VisualElement>($"slot-{i}");
-                if (slot != null && slot.Children().Any(e => e.ClassListContains("command-group"))) {
-                    var icon = slot.Q<Image>();
-                    if (icon != null && icon.sprite == TimeLineUI.Instance.MoveIcon) {
-                        lastPlacedMoveEndTick = i;
-                        break;
-                    }
+        // 가장 가까운 컬럼으로 스냅
+        int closestCol = -1;
+        float minDistance = float.MaxValue;
+        for (int i = 1; i <= 8; i++) {
+            VisualElement col = docRoot.Q<VisualElement>($"tick-col-{i}");
+            if (col != null) {
+                float dist = Mathf.Abs(checkX - col.worldBound.center.x);
+                if (dist < minDistance && dist < 65f) {
+                    minDistance = dist;
+                    closestCol = i;
                 }
             }
         }
 
-        if (lastPlacedMoveEndTick != -1 && hitTick > lastPlacedMoveEndTick) {
-            TileData virtualTile = GridSystem.Instance.GetTileData(owner.virtualPosition);
-            if (virtualTile != null) {
-                playerEffectiveWorldPos = virtualTile.worldPosition;
-            }
-        }
-
-        TileData enemyTileAtTick = null;
-        bool isValidTarget = false;
-
-        if (targetUnit != null && targetUnit.GetHealth() > 0) {
-            enemyTileAtTick = enemyController.GetEnemyTileAtTick(targetUnit, hitTick);
-            if (enemyTileAtTick != null) {
-                if (IsWithinCrossRange(playerEffectiveWorldPos, enemyTileAtTick.worldPosition, 2)) {
-                    isValidTarget = true;
-                }
-            }
-        }
-
-        if (!isValidTarget) {
-            foreach (var kvp in enemyController.CachedEnemyDecisions) {
-                Unit enemy = kvp.Key;
-                if (enemy == null || enemy.GetHealth() <= 0) continue;
-
-                TileData tile = enemyController.GetEnemyTileAtTick(enemy, hitTick);
-                if (tile != null) {
-                    if (IsWithinCrossRange(playerEffectiveWorldPos, tile.worldPosition, 2)) {
-                        targetUnit = enemy;
-                        enemyTileAtTick = tile;
-                        isValidTarget = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!isValidTarget || enemyTileAtTick == null || targetUnit == null || targetUnit.ghostPrefab == null) {
-            ClearDragHoverGhost();
-            return;
-        }
-
-        Vector3 spawnPos = enemyTileAtTick.worldPosition;
-
-        dragHoverGhostInstance = Object.Instantiate(targetUnit.ghostPrefab, spawnPos, Quaternion.identity);
-
-        int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
-        dragHoverGhostInstance.layer = ignoreRaycastLayer;
-        foreach (Transform child in dragHoverGhostInstance.GetComponentsInChildren<Transform>()) {
-            child.gameObject.layer = ignoreRaycastLayer;
-        }
-
-        Renderer ghostRenderer = dragHoverGhostInstance.GetComponentInChildren<Renderer>();
-        if (ghostRenderer != null) {
-            ghostRenderer.material.color = new Color(1f, 0.2f, 0.2f, 0.75f);
-        }
-
-        dragHoverGhostInstance.SetActive(true);
-    }
-
-    private void ClearDragHoverGhost() {
-        if (dragHoverGhostInstance != null) {
-            Object.Destroy(dragHoverGhostInstance);
-            dragHoverGhostInstance = null;
-        }
+        return closestCol;
     }
 
     private Unit GetOwnerFromCommand(ICommand cmd) {
